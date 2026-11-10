@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
+import { Icon } from "@/components/icons";
 import { PageHeader } from "@/components/page-header";
 import { ProviderLogo } from "@/components/provider-logo";
 import { card } from "@/components/ui";
@@ -16,7 +18,26 @@ type Account = Awaited<ReturnType<typeof getAccounts>>[number];
 export default function AkunPage() {
   return (
     <>
-      <PageHeader title="Akun & Dompet" subtitle="Tunai, rekening bank, dan e-wallet" mobileAction={<AddAccountSheet />} />
+      <PageHeader
+        title="Akun & Dompet"
+        mobileTitle="Akun"
+        subtitle="Tunai, rekening bank, dan e-wallet"
+        mobileAction={
+          <>
+            {/* Jalan masuk Import BRI di HP, di samping Tambah. */}
+            {/* Ikon saja supaya judul "Akun & Dompet" tidak terpotong di layar sempit. */}
+            <Link
+              href="/import"
+              aria-label="Import mutasi BRI"
+              title="Import mutasi BRI"
+              className="grid h-11 w-11 flex-none place-items-center rounded-xl border border-line bg-white text-g800 active:translate-y-px"
+            >
+              <Icon name="income" />
+            </Link>
+            <AddAccountSheet />
+          </>
+        }
+      />
       <Suspense fallback={<p className="p-6 text-muted" role="status">Memuat akun...</p>}>
         <Accounts />
       </Suspense>

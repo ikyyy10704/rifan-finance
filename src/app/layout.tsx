@@ -12,7 +12,9 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: { default: "Rifan Finance", template: "%s · Rifan Finance" },
   description: "Setiap rupiah tercatat, setiap tujuan tercapai",
-  icons: { icon: "/brand/app-icon.png", apple: "/brand/app-icon.png" },
+  // Favicon & ikon: konvensi file Next (src/app/favicon.ico, icon.png, apple-icon.png), dibuat dari logo.
+  // iPhone: bisa dipasang ke layar utama (syarat notifikasi push di iOS).
+  appleWebApp: { capable: true, title: "Rifan", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Icon } from "@/components/icons";
@@ -85,7 +86,10 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
       {/* ===== HP: bilah judul ringkas dengan bulan di kanan ===== */}
       <header className="sticky top-0 z-10 bg-bg/90 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-2 backdrop-blur-md app:hidden">
         <div className="flex min-h-11 items-center gap-2">
-          <h1 className="m-0 text-[24px] font-extrabold tracking-[-0.5px]">Transaksi</h1>
+          <Link href="/dashboard" aria-label="Beranda Rifan Finance" className="flex-none">
+            <Image src="/icons/icon-192.png" alt="" width={34} height={34} className="rounded-[10px]" />
+          </Link>
+          <h1 className="m-0 text-[22px] font-extrabold tracking-[-0.5px]">Transaksi</h1>
           <nav aria-label="Pilih bulan" className="ml-auto flex items-center">
             <Link href={href({ bulan: shiftMonth(month, -1) })} aria-label="Bulan sebelumnya" className="grid h-11 w-10 place-items-center rounded-xl text-g800 active:bg-white">
               <Icon name="chevronLeft" />

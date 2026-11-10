@@ -16,6 +16,7 @@ const MAIN: Item[] = [
   { href: "/transaksi", label: "Transaksi", icon: "list" },
   { href: "/akun", label: "Akun & Dompet", icon: "wallet" },
   { href: "/kategori", label: "Kategori", icon: "tag" },
+  { href: "/notifikasi", label: "Notifikasi", icon: "bell" },
 ];
 const DATA: Item[] = [{ href: "/import", label: "Import Mutasi BRI", icon: "income" }];
 const ADMIN: Item[] = [{ href: "/admin/pengguna", label: "Kelola Pengguna", icon: "users" }];
@@ -25,10 +26,11 @@ const isActive = (path: string, href: string) => path === href || path.startsWit
 type NavUser = { id: number; name: string; role: "admin" | "user"; avatar: string | null };
 
 /** Sidebar desktop, gaya .sidebar di rifan-finance-web.html. */
-export function Sidebar({ user }: { user: NavUser }) {
+export function Sidebar({ user, unread }: { user: NavUser; unread: number }) {
   const path = usePathname();
   const link = (it: Item) => {
     const on = isActive(path, it.href);
+    const count = it.href === "/notifikasi" ? unread : 0;
     return (
       <Link
         key={it.href}
@@ -40,6 +42,11 @@ export function Sidebar({ user }: { user: NavUser }) {
       >
         <Icon name={it.icon} />
         {it.label}
+        {count > 0 && (
+          <span className="ml-auto rounded-full bg-danger px-2 py-0.5 text-[11px] font-bold text-white" aria-label={`${count} belum dibaca`}>
+            {count}
+          </span>
+        )}
       </Link>
     );
   };

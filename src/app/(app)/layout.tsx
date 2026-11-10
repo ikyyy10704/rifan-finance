@@ -4,6 +4,7 @@ import { BottomNav, Sidebar } from "@/components/app-nav";
 import { TxSheetProvider } from "@/components/tx-sheet";
 import { getAccounts, getCategories } from "@/lib/data/finance";
 import { requireUser } from "@/lib/dal";
+import { ensureTodayAlerts } from "@/lib/data/notifications";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -15,11 +16,12 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 
 async function Shell({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const [accounts, categories] = await Promise.all([getAccounts(), getCategories()]);
+  // Peringatan hari ini dibuat saat aplikasi dibuka, jadi tetap muncul walau server mati pukul 07.00.
+  const [accounts, categories, unread] = await Promise.all([getAccounts(), getCategories(), ensureTodayAlerts()]);
   return (
     <TxSheetProvider accounts={accounts} categories={categories}>
       <div className="min-h-dvh app:flex">
-        <Sidebar user={{ id: user.id, name: user.name, role: user.role, avatar: user.avatar }} />
+        <Sidebar user={{ id: user.id, name: user.name, role: user.role, avatar: user.avatar }} unread={unread} />
         {/* Ruang bawah untuk menu bawah HP supaya isi terakhir tidak tertutup. */}
         <main className="min-w-0 flex-1 pb-[calc(110px+env(safe-area-inset-bottom))] app:pb-0">{children}</main>
       </div>

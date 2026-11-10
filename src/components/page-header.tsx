@@ -1,3 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
@@ -6,11 +8,13 @@ import type { ReactNode } from "react";
  */
 export function PageHeader({
   title,
+  mobileTitle,
   subtitle,
   action,
   mobileAction,
 }: {
   title: string;
+  mobileTitle?: string; // judul lebih pendek untuk bilah HP yang sempit
   subtitle?: ReactNode;
   action?: ReactNode; // desktop
   mobileAction?: ReactNode; // HP, di kanan judul
@@ -18,8 +22,12 @@ export function PageHeader({
   return (
     <>
       <header className="sticky top-0 z-10 bg-bg/90 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-2 backdrop-blur-md app:hidden">
-        <div className="flex min-h-11 items-center gap-3">
-          <h1 className="m-0 text-[24px] font-extrabold tracking-[-0.5px]">{title}</h1>
+        <div className="flex min-h-11 items-center gap-2.5">
+          {/* Logo di HP (sidebar berlogo hanya ada di desktop); menuju Beranda. */}
+          <Link href="/dashboard" aria-label="Beranda Rifan Finance" className="flex-none">
+            <Image src="/icons/icon-192.png" alt="" width={34} height={34} className="rounded-[10px]" />
+          </Link>
+          <h1 className="m-0 min-w-0 truncate text-[22px] font-extrabold tracking-[-0.5px]">{mobileTitle ?? title}</h1>
           {mobileAction && <div className="ml-auto flex items-center gap-2">{mobileAction}</div>}
         </div>
       </header>

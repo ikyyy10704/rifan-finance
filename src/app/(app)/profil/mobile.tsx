@@ -78,6 +78,16 @@ export function ProfileMobile({ me }: { me: Me }) {
         <h2 className="mb-1.5 px-1 text-[13px] font-semibold text-muted">Aplikasi</h2>
         <Group>
           <li>
+            <Link href="/notifikasi" className={rowClass}>
+              <RowInner icon="bell" label="Notifikasi harian" />
+            </Link>
+          </li>
+          <li>
+            <Link href="/import" className={rowClass}>
+              <RowInner icon="income" label="Import mutasi BRI" />
+            </Link>
+          </li>
+          <li>
             <Link href="/kategori" className={rowClass}>
               <RowInner icon="tag" label="Kategori transaksi" />
             </Link>

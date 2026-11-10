@@ -13,6 +13,7 @@ export const users = sqliteTable("users", {
   totpPending: text("totp_pending"), // rahasia sementara selama proses aktivasi
   totpLastStep: integer("totp_last_step"), // cegah kode yang sama dipakai dua kali
   dashboardPrefs: text("dashboard_prefs"), // JSON: widget beranda yang ditampilkan
+  notifyPrefs: text("notify_prefs"), // JSON: pengaturan peringatan harian
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
@@ -118,6 +119,39 @@ export const transactions = sqliteTable(
     check("tx_amount_positive", sql`${t.amount} > 0`),
   ],
 );
+
+// Peringatan keuangan harian. Satu jenis per hari per user (unik), dibuat ulang tiap hari dari data terbaru.
+export const notifications = sqliteTable(
+  "notifications",
+  {
+    id: integer("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    day: text("day").notNull(), // YYYY-MM-DD (Asia/Jakarta)
+    kind: text("kind").notNull(),
+    level: text("level", { enum: ["info", "warning", "danger"] }).notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    href: text("href"),
+    readAt: text("read_at"),
+    pushedAt: text("pushed_at"), // terkirim sebagai push ke HP
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (t) => [uniqueIndex("idx_notif_user_day_kind").on(t.userId, t.day, t.kind), index("idx_notif_user_read").on(t.userId, t.readAt)],
+);
+
+// Langganan Web Push per perangkat (browser/HP).
+export const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: integer("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
 
 // Satu kali unggah file mutasi. File aslinya tidak disimpan (berisi data rekening).
 export const importBatches = sqliteTable("import_batches", {

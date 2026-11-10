@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "user:create": "tsx scripts/user-create.ts",
-    "user:role": "tsx scripts/user-role.ts"
+    "user:role": "tsx scripts/user-role.ts",
+    "push:keys": "tsx scripts/push-keys.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.2",
@@ -25,6 +26,7 @@
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
     "unpdf": "^1.9.1",
+    "web-push": "^4.0.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -35,6 +37,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.5",

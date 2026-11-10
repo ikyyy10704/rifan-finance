@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { BellLink } from "@/components/bell-link";
 import { ProviderLogo } from "@/components/provider-logo";
+import { ensureTodayAlerts } from "@/lib/data/notifications";
 import { TxList } from "@/components/tx-list";
 import { card } from "@/components/ui";
 import { WIDGETS, type WidgetId } from "@/lib/dashboard-widgets";
@@ -28,13 +30,14 @@ export default function DashboardPage() {
 async function Dashboard() {
   const user = await requireUser();
   const month = thisMonth();
-  const [allAccounts, totals, recent, cashflow, catSpend, prefs] = await Promise.all([
+  const [allAccounts, totals, recent, cashflow, catSpend, prefs, unread] = await Promise.all([
     getAccounts(),
     getMonthTotals(month),
     getTransactions({ limit: 5 }),
     getCashflow(6),
     getCategorySpend(month),
     getDashboardPrefs(),
+    ensureTodayAlerts(),
   ]);
   const accounts = allAccounts.filter((a) => !a.archived);
   const monthName = monthShort(month);
@@ -123,7 +126,10 @@ async function Dashboard() {
           <h1 className="m-0 text-2xl tracking-[-0.4px]">Halo, {firstName}</h1>
           <p className="mt-0.5 mb-0 text-muted">{longDate(todayJakarta())}</p>
         </div>
-        <DashboardSettings prefs={prefs} className="ml-auto" />
+        <div className="ml-auto flex items-center gap-2.5">
+          <BellLink unread={unread} />
+          <DashboardSettings prefs={prefs} />
+        </div>
       </header>
 
       <div className="flex flex-col gap-3.5 app:gap-6 app:px-8 app:pt-6 app:pb-12">
@@ -136,6 +142,7 @@ async function Dashboard() {
           monthExpense={totals.expense}
           monthName={monthName}
           showMonth={prefs.month}
+          unread={unread}
         />
 
         <div className="grid grid-cols-1 gap-3.5 px-4 app:gap-6 app:px-0 wide:grid-cols-2">

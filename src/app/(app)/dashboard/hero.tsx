@@ -6,6 +6,8 @@ import { Icon } from "@/components/icons";
 import { useTxSheet } from "@/components/tx-sheet";
 import type { AccountWithBalance } from "@/lib/data/finance";
 import { Avatar } from "@/components/avatar";
+import { BellLink } from "@/components/bell-link";
+import { BrandText, LogoMark } from "@/components/brand";
 import { rupiah } from "@/lib/format";
 
 // Pilihan "sembunyikan saldo" diingat per perangkat. localStorage bisa diblokir, jadi selalu try/catch.
@@ -48,8 +50,10 @@ export function Hero({
   monthExpense,
   monthName,
   showMonth,
+  unread,
 }: {
   showMonth: boolean;
+  unread: number;
   userId: number;
   avatar: string | null;
   name: string;
@@ -105,14 +109,23 @@ export function Hero({
       aria-label="Ringkasan saldo"
       className="on-dark relative overflow-hidden rounded-b-[32px] bg-g800 px-5 pt-[calc(env(safe-area-inset-top)+20px)] pb-[22px] text-white app:grid app:grid-cols-1 app:gap-6 app:rounded-[28px] app:p-7 wide:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]"
     >
+      {/* HP: logo + nama aplikasi di paling atas (sidebar berlogo hanya ada di desktop). */}
+      <div className="mb-4 flex items-center gap-2.5 app:hidden">
+        <LogoMark size={30} priority />
+        <BrandText className="text-[17px]" />
+      </div>
+
       {/* Sapaan hanya di HP; di desktop sapaan ada di atas halaman. */}
       <div className="flex items-center gap-3 app:hidden">
         <Link href="/profil" aria-label="Profil" className="flex-none rounded-full">
           <Avatar userId={userId} name={name} avatar={avatar} size={42} className="border-2 border-white/40" />
         </Link>
-        <div className="text-[13px] leading-tight text-soft">
+        <div className="min-w-0 text-[13px] leading-tight text-soft">
           Halo,
-          <h1 className="m-0 text-[15px] font-bold text-white">{name}</h1>
+          <h1 className="m-0 truncate text-[15px] font-bold text-white">{name}</h1>
+        </div>
+        <div className="ml-auto">
+          <BellLink unread={unread} dark />
         </div>
       </div>
 
