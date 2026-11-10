@@ -14,8 +14,10 @@ if (!username || (role !== "admin" && role !== "user")) {
   process.exit(1);
 }
 
-const res = createDb().update(users).set({ role }).where(eq(users.username, username)).run();
-if (res.changes === 0) {
+const db = createDb(undefined, 1);
+const res = await db.update(users).set({ role }).where(eq(users.username, username)).returning({ id: users.id });
+await db.$client.end();
+if (res.length === 0) {
   console.error(`Username "${username}" tidak ditemukan.`);
   process.exit(1);
 }

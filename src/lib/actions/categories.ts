@@ -12,12 +12,11 @@ export type CategoryFormState = { error?: string; ok?: string; savedAt?: number 
 
 const nameSchema = z.string().trim().min(1, "Isi nama kategori.").max(30, "Nama kategori maksimal 30 karakter.");
 
-function nameTaken(userId: number, kind: string, name: string, exceptId?: number) {
-  const row = db
+async function nameTaken(userId: number, kind: string, name: string, exceptId?: number) {
+  const [row] = await db
     .select({ id: categories.id })
     .from(categories)
-    .where(and(eq(categories.userId, userId), eq(categories.kind, kind as "income"), sql`lower(${categories.name}) = ${name.toLowerCase()}`))
-    .get();
+    .where(and(eq(categories.userId, userId), eq(categories.kind, kind as "income"), sql`lower(${categories.name}) = ${name.toLowerCase()}`));
   return !!row && row.id !== exceptId;
 }
 
@@ -37,9 +36,9 @@ export async function createCategory(_prev: CategoryFormState, formData: FormDat
     color: formData.get("color") ?? "l",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  if (nameTaken(user.id, parsed.data.kind, parsed.data.name)) return { error: `Kategori "${parsed.data.name}" sudah ada.` };
+  if (await nameTaken(user.id, parsed.data.kind, parsed.data.name)) return { error: `Kategori "${parsed.data.name}" sudah ada.` };
 
-  db.insert(categories).values({ ...parsed.data, userId: user.id }).run();
+  await db.insert(categories).values({ ...parsed.data, userId: user.id });
   refresh();
   return { ok: `Kategori ${parsed.data.name} ditambahkan.`, savedAt: Date.now() };
 }
@@ -48,8 +47,8 @@ export async function createCategory(_prev: CategoryFormState, formData: FormDat
 export async function addSuggestedCategory(input: { name: string; kind: "income" | "expense"; icon: string; color: string }) {
   const user = await requireUser();
   const parsed = createSchema.safeParse(input);
-  if (!parsed.success || nameTaken(user.id, parsed.data.kind, parsed.data.name)) return;
-  db.insert(categories).values({ ...parsed.data, userId: user.id }).run();
+  if (!parsed.success || (await nameTaken(user.id, parsed.data.kind, parsed.data.name))) return;
+  await db.insert(categories).values({ ...parsed.data, userId: user.id });
   refresh();
 }
 
@@ -58,20 +57,19 @@ export async function renameCategory(_prev: CategoryFormState, formData: FormDat
   const id = Number(formData.get("id"));
   const name = nameSchema.safeParse(formData.get("name") ?? "");
   if (!name.success) return { error: name.error.issues[0].message };
-  const cat = db.select({ kind: categories.kind }).from(categories).where(and(eq(categories.id, id), eq(categories.userId, user.id))).get();
+  const [cat] = await db.select({ kind: categories.kind }).from(categories).where(and(eq(categories.id, id), eq(categories.userId, user.id)));
   if (!cat) return { error: "Kategori tidak ditemukan." };
-  if (nameTaken(user.id, cat.kind, name.data, id)) return { error: `Kategori "${name.data}" sudah ada.` };
+  if (await nameTaken(user.id, cat.kind, name.data, id)) return { error: `Kategori "${name.data}" sudah ada.` };
 
-  db.update(categories).set({ name: name.data }).where(and(eq(categories.id, id), eq(categories.userId, user.id))).run();
+  await db.update(categories).set({ name: name.data }).where(and(eq(categories.id, id), eq(categories.userId, user.id)));
   refresh();
   return { ok: "Nama disimpan.", savedAt: Date.now() };
 }
 
 export async function toggleArchiveCategory(id: number) {
   const user = await requireUser();
-  db.update(categories)
+  await db.update(categories)
     .set({ archived: not(categories.archived) })
-    .where(and(eq(categories.id, id), eq(categories.userId, user.id)))
-    .run();
+    .where(and(eq(categories.id, id), eq(categories.userId, user.id)));
   refresh();
 }

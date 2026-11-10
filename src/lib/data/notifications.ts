@@ -12,22 +12,24 @@ import { pushReady } from "@/lib/push";
  */
 export async function ensureTodayAlerts() {
   const user = await requireUser();
-  generateAlerts(db, user.id);
+  await generateAlerts(db, user.id);
   return unreadCount(db, user.id);
 }
 
 export async function getNotificationPage() {
   const user = await requireUser();
-  generateAlerts(db, user.id);
-  const list = db
-    .select()
-    .from(notifications)
-    .where(eq(notifications.userId, user.id))
-    .orderBy(desc(notifications.day), desc(notifications.id))
-    .limit(90)
-    .all();
-  const prefs = parseNotifyPrefs(db.select({ p: users.notifyPrefs }).from(users).where(eq(users.id, user.id)).get()?.p);
-  const devices = db.select({ endpoint: pushSubscriptions.endpoint }).from(pushSubscriptions).where(eq(pushSubscriptions.userId, user.id)).all().length;
+  await generateAlerts(db, user.id);
+  const [list, [u], devices] = await Promise.all([
+    db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, user.id))
+      .orderBy(desc(notifications.day), desc(notifications.id))
+      .limit(90),
+    db.select({ p: users.notifyPrefs }).from(users).where(eq(users.id, user.id)),
+    db.$count(pushSubscriptions, eq(pushSubscriptions.userId, user.id)),
+  ]);
+  const prefs = parseNotifyPrefs(u?.p);
   return {
     list,
     prefs,

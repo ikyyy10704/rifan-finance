@@ -52,18 +52,18 @@ async function main() {
     throw new Error(input.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("\n"));
   }
 
-  const db = createDb();
-  const existing = db.select().from(users).where(eq(users.username, input.data.username)).get();
+  const db = createDb(undefined, 1);
+  const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.username, input.data.username));
   if (existing) throw new Error(`Username "${input.data.username}" sudah dipakai.`);
 
   const passwordHash = await hash(input.data.password);
-  const created = db
+  const [created] = await db
     .insert(users)
     .values({ username: input.data.username, name: input.data.name, role: input.data.role, passwordHash })
-    .returning({ id: users.id })
-    .get();
-  seedDefaultCategories(db, created.id);
+    .returning({ id: users.id });
+  await seedDefaultCategories(db, created.id);
   console.log(`Akun dibuat: ${input.data.username} (${input.data.role})`);
+  await db.$client.end();
 }
 
 main().catch((e: Error) => {

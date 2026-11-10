@@ -15,7 +15,7 @@ export const hashToken = (token: string) => createHash("sha256").update(token).d
 export async function createSession(userId: number) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  db.insert(sessions).values({ id: hashToken(token), userId, expiresAt }).run();
+  await db.insert(sessions).values({ id: hashToken(token), userId, expiresAt });
 
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -40,11 +40,11 @@ export type SessionUser = {
 export const readSession = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  // Pengecekan sesi bergantung pada waktu sekarang dan query SQLite sinkron, jadi harus menunggu
+  // Pengecekan sesi bergantung pada waktu sekarang dan data di database, jadi harus menunggu
   // request sungguhan (bukan prerender/prefetch). Semua data per pengguna lewat sini.
   await connection();
 
-  const row = db
+  const [row] = await db
     .select({
       id: users.id,
       username: users.username,
@@ -55,8 +55,7 @@ export const readSession = cache(async (): Promise<SessionUser | null> => {
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.id, hashToken(token)), gt(sessions.expiresAt, new Date()), eq(users.active, true)))
-    .get();
+    .where(and(eq(sessions.id, hashToken(token)), gt(sessions.expiresAt, new Date()), eq(users.active, true)));
   if (!row) return null;
   const { totpSecret, ...user } = row;
   return { ...user, totpEnabled: !!totpSecret };
@@ -66,14 +65,12 @@ export const readSession = cache(async (): Promise<SessionUser | null> => {
 export async function deleteUserSessions(userId: number) {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const current = token ? hashToken(token) : "";
-  db.delete(sessions)
-    .where(and(eq(sessions.userId, userId), ne(sessions.id, current)))
-    .run();
+  await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.id, current)));
 }
 
 export async function deleteSession() {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  if (token) db.delete(sessions).where(eq(sessions.id, hashToken(token))).run();
+  if (token) await db.delete(sessions).where(eq(sessions.id, hashToken(token)));
   store.delete(SESSION_COOKIE);
 }

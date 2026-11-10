@@ -21,7 +21,7 @@ export type PushPayload = { title: string; body: string; url: string; tag?: stri
 /** Kirim ke semua perangkat milik user. Langganan yang sudah kedaluwarsa (404/410) dihapus. */
 export async function pushToUser(db: Db, userId: number, payload: PushPayload) {
   if (!pushReady()) return { sent: 0, failed: 0 };
-  const subs = db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId)).all();
+  const subs = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
   let sent = 0;
   let failed = 0;
   for (const s of subs) {
@@ -31,7 +31,7 @@ export async function pushToUser(db: Db, userId: number, payload: PushPayload) {
     } catch (e) {
       failed++;
       const code = (e as { statusCode?: number }).statusCode;
-      if (code === 404 || code === 410) db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, s.id)).run();
+      if (code === 404 || code === 410) await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, s.id));
     }
   }
   return { sent, failed };

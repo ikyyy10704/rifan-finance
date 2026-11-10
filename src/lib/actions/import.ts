@@ -20,11 +20,10 @@ export async function uploadStatement(_prev: UploadState, formData: FormData): P
   const file = formData.get("file");
   const password = String(formData.get("password") ?? "") || undefined;
 
-  const account = db
+  const [account] = await db
     .select({ id: accounts.id, provider: accounts.provider, accountNumber: accounts.accountNumber })
     .from(accounts)
-    .where(and(eq(accounts.id, accountId), eq(accounts.userId, user.id), eq(accounts.archived, false)))
-    .get();
+    .where(and(eq(accounts.id, accountId), eq(accounts.userId, user.id), eq(accounts.archived, false)));
   if (!account || account.provider !== "bri") return { error: "Pilih akun BRI tujuan." };
   if (!(file instanceof File) || file.size === 0) return { error: "Pilih file mutasi (CSV atau PDF)." };
   if (file.size > MAX_BYTES) return { error: "Ukuran file maksimal 5 MB." };
@@ -50,28 +49,21 @@ export async function uploadStatement(_prev: UploadState, formData: FormData): P
     return { error: `Nomor rekening di file (${fileAcc}) berbeda dengan nomor akun ini (${account.accountNumber}). Pilih akun BRI yang sesuai.` };
   }
 
-  const cats = db
-    .select({ id: categories.id, name: categories.name, kind: categories.kind, archived: categories.archived })
-    .from(categories)
-    .where(eq(categories.userId, user.id))
-    .all();
-  const accs = db
-    .select({ id: accounts.id, provider: accounts.provider, accountNumber: accounts.accountNumber, archived: accounts.archived })
-    .from(accounts)
-    .where(eq(accounts.userId, user.id))
-    .all();
-  const existing = new Set(
+  const [cats, accs, hashes] = await Promise.all([
     db
-      .select({ h: transactions.importHash })
-      .from(transactions)
-      .where(eq(transactions.userId, user.id))
-      .all()
-      .map((r) => r.h)
-      .filter(Boolean),
-  );
+      .select({ id: categories.id, name: categories.name, kind: categories.kind, archived: categories.archived })
+      .from(categories)
+      .where(eq(categories.userId, user.id)),
+    db
+      .select({ id: accounts.id, provider: accounts.provider, accountNumber: accounts.accountNumber, archived: accounts.archived })
+      .from(accounts)
+      .where(eq(accounts.userId, user.id)),
+    db.select({ h: transactions.importHash }).from(transactions).where(eq(transactions.userId, user.id)),
+  ]);
+  const existing = new Set(hashes.map((r) => r.h).filter(Boolean));
 
-  const batchId = db.transaction((tx) => {
-    const batch = tx
+  const batchId = await db.transaction(async (tx) => {
+    const [batch] = await tx
       .insert(importBatches)
       .values({
         userId: user.id,
@@ -84,32 +76,31 @@ export async function uploadStatement(_prev: UploadState, formData: FormData): P
         openingBalance: statement.openingBalance,
         closingBalance: statement.closingBalance,
       })
-      .returning({ id: importBatches.id })
-      .get();
+      .returning({ id: importBatches.id });
 
-    statement.rows.forEach((r, i) => {
+    // Satu INSERT untuk semua baris: jauh lebih cepat daripada satu per baris lewat jaringan.
+    const values = statement.rows.map((r, i) => {
       const g = guessRow(r, statement.rows[i - 1], cats, accs, account.id);
       const hash = rowHash(fileAcc, account.id, r);
-      tx.insert(importRows)
-        .values({
-          batchId: batch.id,
-          userId: user.id,
-          position: i,
-          date: r.date,
-          time: r.time,
-          rawDescription: r.description,
-          note: g.note,
-          direction: r.debit > 0 ? "debit" : "credit",
-          amount: r.debit || r.credit,
-          balanceAfter: r.balance,
-          hash,
-          kind: g.kind,
-          categoryId: g.categoryId,
-          toAccountId: g.toAccountId,
-          status: existing.has(hash) ? "duplicate" : "draft",
-        })
-        .run();
+      return {
+        batchId: batch.id,
+        userId: user.id,
+        position: i,
+        date: r.date,
+        time: r.time,
+        rawDescription: r.description,
+        note: g.note,
+        direction: r.debit > 0 ? ("debit" as const) : ("credit" as const),
+        amount: r.debit || r.credit,
+        balanceAfter: r.balance,
+        hash,
+        kind: g.kind,
+        categoryId: g.categoryId,
+        toAccountId: g.toAccountId,
+        status: existing.has(hash) ? ("duplicate" as const) : ("draft" as const),
+      };
     });
+    if (values.length) await tx.insert(importRows).values(values);
     return batch.id;
   });
 
@@ -128,11 +119,10 @@ export async function updateImportRow(rowId: number, input: { note?: string; tar
   const parsed = rowSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const row = db
+  const [row] = await db
     .select({ id: importRows.id, direction: importRows.direction, status: importRows.status, batchId: importRows.batchId })
     .from(importRows)
-    .where(and(eq(importRows.id, rowId), eq(importRows.userId, user.id)))
-    .get();
+    .where(and(eq(importRows.id, rowId), eq(importRows.userId, user.id)));
   if (!row) return { error: "Baris tidak ditemukan." };
   if (row.status !== "draft") return { error: "Baris ini sudah dimasukkan, ubah lewat halaman Transaksi." };
 
@@ -142,27 +132,25 @@ export async function updateImportRow(rowId: number, input: { note?: string; tar
     const [k, idStr] = parsed.data.target.split(":");
     const id = Number(idStr);
     if (k === "c") {
-      const cat = db
+      const [cat] = await db
         .select({ kind: categories.kind })
         .from(categories)
-        .where(and(eq(categories.id, id), eq(categories.userId, user.id)))
-        .get();
+        .where(and(eq(categories.id, id), eq(categories.userId, user.id)));
       const want = row.direction === "credit" ? "income" : "expense";
       if (!cat || cat.kind !== want) return { error: "Kategori tidak cocok dengan arah transaksi." };
       Object.assign(set, { kind: want, categoryId: id, toAccountId: null });
     } else {
       if (row.direction !== "debit") return { error: "Uang masuk tidak bisa dijadikan transfer keluar." };
-      const batch = db.select({ accountId: importBatches.accountId }).from(importBatches).where(eq(importBatches.id, row.batchId)).get();
-      const acc = db
+      const [batch] = await db.select({ accountId: importBatches.accountId }).from(importBatches).where(eq(importBatches.id, row.batchId));
+      const [acc] = await db
         .select({ id: accounts.id })
         .from(accounts)
-        .where(and(eq(accounts.id, id), eq(accounts.userId, user.id)))
-        .get();
+        .where(and(eq(accounts.id, id), eq(accounts.userId, user.id)));
       if (!acc || acc.id === batch?.accountId) return { error: "Akun tujuan tidak valid." };
       Object.assign(set, { kind: "transfer", categoryId: null, toAccountId: id });
     }
   }
-  db.update(importRows).set(set).where(eq(importRows.id, rowId)).run();
+  if (Object.keys(set).length) await db.update(importRows).set(set).where(eq(importRows.id, rowId));
   return {};
 }
 
@@ -174,39 +162,40 @@ export async function commitImportRows(batchId: number, rowIds: number[]): Promi
   const ids = z.array(z.number().int().positive()).max(2000).safeParse(rowIds);
   if (!ids.success || ids.data.length === 0) return { error: "Pilih minimal satu baris." };
 
-  const batch = db
+  const [batch] = await db
     .select()
     .from(importBatches)
-    .where(and(eq(importBatches.id, batchId), eq(importBatches.userId, user.id)))
-    .get();
+    .where(and(eq(importBatches.id, batchId), eq(importBatches.userId, user.id)));
   if (!batch) return { error: "Draft impor tidak ditemukan." };
 
-  const rows = db
+  const rows = await db
     .select()
     .from(importRows)
-    .where(and(eq(importRows.batchId, batchId), eq(importRows.userId, user.id), eq(importRows.status, "draft"), inArray(importRows.id, ids.data)))
-    .all();
+    .where(and(eq(importRows.batchId, batchId), eq(importRows.userId, user.id), eq(importRows.status, "draft"), inArray(importRows.id, ids.data)));
   const incomplete = rows.filter((r) => (r.kind === "transfer" ? !r.toAccountId : !r.categoryId));
   if (incomplete.length) return { error: `${incomplete.length} baris belum punya kategori. Pilih kategorinya dulu.` };
 
   let imported = 0;
   let skipped = 0;
-  db.transaction((tx) => {
-    for (const r of rows) {
-      // Sudah ada di transaksi (mis. diimpor dari file lain)? tandai, jangan dobel.
-      const dup = tx
-        .select({ id: transactions.id })
-        .from(transactions)
-        .where(and(eq(transactions.userId, user.id), eq(transactions.importHash, r.hash)))
-        .get();
-      if (dup) {
-        tx.update(importRows).set({ status: "duplicate" }).where(eq(importRows.id, r.id)).run();
-        skipped++;
-        continue;
-      }
-      const t = tx
-        .insert(transactions)
-        .values({
+  await db.transaction(async (tx) => {
+    // Sudah ada di transaksi (mis. diimpor dari file lain)? tandai, jangan dobel.
+    const taken = rows.length
+      ? await tx
+          .select({ h: transactions.importHash })
+          .from(transactions)
+          .where(and(eq(transactions.userId, user.id), inArray(transactions.importHash, rows.map((r) => r.hash))))
+      : [];
+    const takenSet = new Set(taken.map((t) => t.h));
+    const dupIds = rows.filter((r) => takenSet.has(r.hash)).map((r) => r.id);
+    const fresh = rows.filter((r) => !takenSet.has(r.hash));
+    if (dupIds.length) await tx.update(importRows).set({ status: "duplicate" }).where(inArray(importRows.id, dupIds));
+    skipped = dupIds.length;
+    if (!fresh.length) return;
+
+    const created = await tx
+      .insert(transactions)
+      .values(
+        fresh.map((r) => ({
           userId: user.id,
           type: r.kind,
           accountId: batch.accountId,
@@ -216,12 +205,14 @@ export async function commitImportRows(batchId: number, rowIds: number[]): Promi
           date: r.date,
           note: r.note || r.rawDescription.slice(0, 200),
           importHash: r.hash,
-        })
-        .returning({ id: transactions.id })
-        .get();
-      tx.update(importRows).set({ status: "imported", transactionId: t.id }).where(eq(importRows.id, r.id)).run();
-      imported++;
+        })),
+      )
+      .returning({ id: transactions.id, hash: transactions.importHash });
+    const txByHash = new Map(created.map((c) => [c.hash, c.id]));
+    for (const r of fresh) {
+      await tx.update(importRows).set({ status: "imported", transactionId: txByHash.get(r.hash) }).where(eq(importRows.id, r.id));
     }
+    imported = fresh.length;
   });
 
   refresh();
@@ -231,14 +222,13 @@ export async function commitImportRows(batchId: number, rowIds: number[]): Promi
 /** Hapus baris draft yang tersisa. Baris yang sudah dimasukkan tetap ada di Transaksi. */
 export async function discardImportDrafts(batchId: number) {
   const user = await requireUser();
-  const batch = db
+  const [batch] = await db
     .select({ id: importBatches.id })
     .from(importBatches)
-    .where(and(eq(importBatches.id, batchId), eq(importBatches.userId, user.id)))
-    .get();
+    .where(and(eq(importBatches.id, batchId), eq(importBatches.userId, user.id)));
   if (!batch) return;
-  db.delete(importRows).where(and(eq(importRows.batchId, batchId), inArray(importRows.status, ["draft", "duplicate"]))).run();
-  const left = db.select({ id: importRows.id }).from(importRows).where(eq(importRows.batchId, batchId)).get();
-  if (!left) db.delete(importBatches).where(eq(importBatches.id, batchId)).run();
+  await db.delete(importRows).where(and(eq(importRows.batchId, batchId), inArray(importRows.status, ["draft", "duplicate"])));
+  const [left] = await db.select({ id: importRows.id }).from(importRows).where(eq(importRows.batchId, batchId)).limit(1);
+  if (!left) await db.delete(importBatches).where(eq(importBatches.id, batchId));
   redirect("/import");
 }

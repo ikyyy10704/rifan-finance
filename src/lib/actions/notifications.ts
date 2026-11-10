@@ -19,18 +19,16 @@ export async function savePushSubscription(sub: unknown): Promise<{ error?: stri
   const parsed = subSchema.safeParse(sub);
   if (!parsed.success) return { error: "Data langganan notifikasi tidak valid." };
   const { endpoint, keys } = parsed.data;
-  db.insert(pushSubscriptions)
+  await db.insert(pushSubscriptions)
     .values({ userId: user.id, endpoint, p256dh: keys.p256dh, auth: keys.auth })
-    .onConflictDoUpdate({ target: pushSubscriptions.endpoint, set: { userId: user.id, p256dh: keys.p256dh, auth: keys.auth } })
-    .run();
+    .onConflictDoUpdate({ target: pushSubscriptions.endpoint, set: { userId: user.id, p256dh: keys.p256dh, auth: keys.auth } });
   return {};
 }
 
 export async function removePushSubscription(endpoint: string) {
   const user = await requireUser();
-  db.delete(pushSubscriptions)
-    .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)))
-    .run();
+  await db.delete(pushSubscriptions)
+    .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)));
 }
 
 export async function sendTestPush(): Promise<{ error?: string; ok?: string }> {
@@ -48,10 +46,9 @@ export async function sendTestPush(): Promise<{ error?: string; ok?: string }> {
 
 export async function markAllNotificationsRead() {
   const user = await requireUser();
-  db.update(notifications)
+  await db.update(notifications)
     .set({ readAt: new Date().toISOString() })
-    .where(and(eq(notifications.userId, user.id), isNull(notifications.readAt)))
-    .run();
+    .where(and(eq(notifications.userId, user.id), isNull(notifications.readAt)));
   // Sengaja tanpa refresh(): label "Baru" tetap terlihat selama halaman ini dibuka;
   // angka di lonceng sudah 0 saat pindah halaman.
 }
@@ -66,10 +63,9 @@ export async function saveNotifyPrefs(prefs: NotifyPrefs): Promise<{ error?: str
   const parsed = prefsSchema.safeParse(prefs);
   if (!parsed.success) return { error: "Pengaturan tidak valid." };
   const kinds = Object.fromEntries(ALERT_KINDS.map((k) => [k.id, parsed.data.kinds[k.id] !== false]));
-  db.update(users)
+  await db.update(users)
     .set({ notifyPrefs: JSON.stringify({ lowBalance: parsed.data.lowBalance, kinds }) })
-    .where(eq(users.id, user.id))
-    .run();
+    .where(eq(users.id, user.id));
   refresh();
   return {};
 }

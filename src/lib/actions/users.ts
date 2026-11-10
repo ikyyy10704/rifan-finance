@@ -24,15 +24,14 @@ export async function createUser(_prev: UserFormState, formData: FormData): Prom
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
 
-  if (db.select({ id: users.id }).from(users).where(eq(users.username, d.username)).get()) {
+  if ((await db.select({ id: users.id }).from(users).where(eq(users.username, d.username))).length) {
     return { error: `Username "${d.username}" sudah dipakai.` };
   }
-  const created = db
+  const [created] = await db
     .insert(users)
     .values({ username: d.username, name: d.name, role: d.role, passwordHash: await hash(d.password) })
-    .returning({ id: users.id })
-    .get();
-  seedDefaultCategories(db, created.id);
+    .returning({ id: users.id });
+  await seedDefaultCategories(db, created.id);
 
   refresh();
   return { ok: `Akun ${d.username} dibuat. Berikan password-nya langsung ke pemilik akun.`, savedAt: Date.now() };
@@ -48,12 +47,12 @@ export async function resetPassword(_prev: UserFormState, formData: FormData): P
   const parsed = resetSchema.safeParse({ userId: formData.get("userId"), password: formData.get("password") ?? "" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const res = db
+  const res = await db
     .update(users)
     .set({ passwordHash: await hash(parsed.data.password) })
     .where(eq(users.id, parsed.data.userId))
-    .run();
-  if (res.changes === 0) return { error: "Akun tidak ditemukan." };
+    .returning({ id: users.id });
+  if (res.length === 0) return { error: "Akun tidak ditemukan." };
 
   // Perangkat lain yang masih login dengan password lama ikut keluar.
   await deleteUserSessions(parsed.data.userId);
@@ -65,14 +64,14 @@ export async function resetPassword(_prev: UserFormState, formData: FormData): P
 export async function resetUserTotp(userId: number) {
   const admin = await requireAdmin();
   if (userId === admin.id) return; // admin mematikan 2FA miliknya sendiri lewat Profil (butuh password + kode)
-  db.update(users).set({ totpSecret: null, totpPending: null, totpLastStep: null }).where(eq(users.id, userId)).run();
+  await db.update(users).set({ totpSecret: null, totpPending: null, totpLastStep: null }).where(eq(users.id, userId));
   refresh();
 }
 
 export async function setUserActive(userId: number, active: boolean) {
   const admin = await requireAdmin();
   if (userId === admin.id) return;
-  db.update(users).set({ active }).where(eq(users.id, userId)).run();
-  if (!active) db.delete(sessions).where(eq(sessions.userId, userId)).run();
+  await db.update(users).set({ active }).where(eq(users.id, userId));
+  if (!active) await db.delete(sessions).where(eq(sessions.userId, userId));
   refresh();
 }

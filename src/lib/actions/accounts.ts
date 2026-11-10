@@ -37,7 +37,7 @@ export async function createAccount(_prev: AccountFormState, formData: FormData)
 
   const d = parsed.data;
   const type = findProvider(d.provider)!.type; // jenis akun mengikuti penyedia, bukan input form
-  db.insert(accounts)
+  await db.insert(accounts)
     .values({
       userId: user.id,
       provider: d.provider,
@@ -45,17 +45,15 @@ export async function createAccount(_prev: AccountFormState, formData: FormData)
       name: d.name,
       accountNumber: type === "cash" || !d.accountNumber ? null : d.accountNumber,
       initialBalance: d.initialBalance,
-    })
-    .run();
+    });
   refresh();
   return { savedAt: Date.now() };
 }
 
 export async function toggleArchiveAccount(id: number) {
   const user = await requireUser();
-  db.update(accounts)
+  await db.update(accounts)
     .set({ archived: not(accounts.archived) })
-    .where(and(eq(accounts.id, id), eq(accounts.userId, user.id)))
-    .run();
+    .where(and(eq(accounts.id, id), eq(accounts.userId, user.id)));
   refresh();
 }

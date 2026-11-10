@@ -33,16 +33,16 @@ export const DEFAULT_CATEGORIES: Def[] = [
  * Tambahkan kategori bawaan yang belum dimiliki user (dicocokkan dari nama + jenis).
  * Aman dijalankan berulang; kategori yang sudah ada, diganti nama, atau disembunyikan tidak disentuh.
  */
-export function seedDefaultCategories(db: Db, userId: number) {
+export async function seedDefaultCategories(db: Db, userId: number) {
   const have = new Set(
-    db
+    (
+      await db
       .select({ name: categories.name, kind: categories.kind })
       .from(categories)
-      .where(and(eq(categories.userId, userId)))
-      .all()
-      .map((c) => `${c.kind}:${c.name.toLowerCase()}`),
+        .where(and(eq(categories.userId, userId)))
+    ).map((c) => `${c.kind}:${c.name.toLowerCase()}`),
   );
   const missing = DEFAULT_CATEGORIES.filter((c) => !have.has(`${c.kind}:${c.name.toLowerCase()}`));
-  if (missing.length) db.insert(categories).values(missing.map((c) => ({ ...c, userId }))).run();
+  if (missing.length) await db.insert(categories).values(missing.map((c) => ({ ...c, userId })));
   return missing.length;
 }

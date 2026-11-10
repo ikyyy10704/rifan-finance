@@ -1,47 +1,12 @@
 {
   "version": "7",
-  "dialect": "sqlite",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "6",
-      "when": 1794118902959,
+      "version": "7",
+      "when": 1794300010120,
       "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1794123431363,
-      "tag": "0001_keuangan",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1794127836091,
-      "tag": "0002_profil_2fa_penyedia",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1794165199667,
-      "tag": "0003_dashboard_kategori",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1794294220321,
-      "tag": "0004_import_bri",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1794297134725,
-      "tag": "0005_notifikasi",
       "breakpoints": true
     }
   ]

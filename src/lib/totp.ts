@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, isNull, lt, or } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 import { Secret, TOTP } from "otpauth";
@@ -30,13 +30,18 @@ export function checkTotp(secret: string, code: string): number | null {
 }
 
 /** Cek kode untuk user tertentu dan tandai langkahnya supaya kode yang sama tidak bisa dipakai ulang. */
-export function verifyUserTotp(userId: number, code: string): boolean {
-  const u = db.select({ secret: users.totpSecret, last: users.totpLastStep }).from(users).where(eq(users.id, userId)).get();
+export async function verifyUserTotp(userId: number, code: string): Promise<boolean> {
+  const [u] = await db.select({ secret: users.totpSecret, last: users.totpLastStep }).from(users).where(eq(users.id, userId));
   if (!u?.secret) return false;
   const step = checkTotp(u.secret, code);
   if (step === null || (u.last !== null && step <= u.last)) return false;
-  db.update(users).set({ totpLastStep: step }).where(eq(users.id, userId)).run();
-  return true;
+  // Bersyarat: dua permintaan bersamaan dengan kode yang sama, hanya satu yang lolos.
+  const claimed = await db
+    .update(users)
+    .set({ totpLastStep: step })
+    .where(and(eq(users.id, userId), or(isNull(users.totpLastStep), lt(users.totpLastStep, step))))
+    .returning({ id: users.id });
+  return claimed.length > 0;
 }
 
 // ---- Tiket login tahap kedua ----
@@ -46,8 +51,8 @@ const CHALLENGE_MINUTES = 5;
 export async function createChallenge(userId: number) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + CHALLENGE_MINUTES * 60 * 1000);
-  db.delete(loginChallenges).where(eq(loginChallenges.userId, userId)).run();
-  db.insert(loginChallenges).values({ id: hashToken(token), userId, expiresAt }).run();
+  await db.delete(loginChallenges).where(eq(loginChallenges.userId, userId));
+  await db.insert(loginChallenges).values({ id: hashToken(token), userId, expiresAt });
   (await cookies()).set(CHALLENGE_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -61,19 +66,17 @@ export async function createChallenge(userId: number) {
 export async function readChallenge() {
   const token = (await cookies()).get(CHALLENGE_COOKIE)?.value;
   if (!token) return null;
-  return (
-    db
-      .select({ userId: users.id, username: users.username, active: users.active })
-      .from(loginChallenges)
-      .innerJoin(users, eq(users.id, loginChallenges.userId))
-      .where(and(eq(loginChallenges.id, hashToken(token)), gt(loginChallenges.expiresAt, new Date())))
-      .get() ?? null
-  );
+  const [row] = await db
+    .select({ userId: users.id, username: users.username, active: users.active })
+    .from(loginChallenges)
+    .innerJoin(users, eq(users.id, loginChallenges.userId))
+    .where(and(eq(loginChallenges.id, hashToken(token)), gt(loginChallenges.expiresAt, new Date())));
+  return row ?? null;
 }
 
 export async function clearChallenge() {
   const store = await cookies();
   const token = store.get(CHALLENGE_COOKIE)?.value;
-  if (token) db.delete(loginChallenges).where(eq(loginChallenges.id, hashToken(token))).run();
+  if (token) await db.delete(loginChallenges).where(eq(loginChallenges.id, hashToken(token)));
   store.delete({ name: CHALLENGE_COOKIE, path: "/login" });
 }

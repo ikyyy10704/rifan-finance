@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/dal";
 
 export async function listUsers() {
   await requireAdmin();
-  return db
+  const rows = await db
     .select({
       id: users.id,
       username: users.username,
@@ -17,7 +17,6 @@ export async function listUsers() {
       totpSecret: users.totpSecret,
     })
     .from(users)
-    .orderBy(asc(users.id))
-    .all()
-    .map(({ totpSecret, ...u }) => ({ ...u, totpEnabled: !!totpSecret })); // rahasia 2FA tidak dikirim ke halaman
+    .orderBy(asc(users.id));
+  return rows.map(({ totpSecret, ...u }) => ({ ...u, totpEnabled: !!totpSecret })); // rahasia 2FA tidak dikirim ke halaman
 }

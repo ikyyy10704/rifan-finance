@@ -2,6 +2,7 @@ import "server-only";
 import { asc, eq } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { all, one } from "@/db/client";
 import { categories, users, type AccountType, type TxType } from "@/db/schema";
 import { parsePrefs } from "@/lib/dashboard-widgets";
 import { requireUser } from "@/lib/dal";
@@ -46,9 +47,9 @@ export type TxRow = {
 // Rumus PRD: saldo awal + pemasukan − pengeluaran − transfer keluar + transfer masuk.
 export async function getAccounts(): Promise<AccountWithBalance[]> {
   const user = await requireUser();
-  const rows = db.all<Omit<AccountWithBalance, "archived"> & { archived: number }>(sql`
-    SELECT a.id, a.name, a.type, a.provider, a.account_number AS accountNumber,
-      a.initial_balance AS initialBalance, a.archived,
+  return all<AccountWithBalance>(db, sql`
+    SELECT a.id, a.name, a.type, a.provider, a.account_number AS "accountNumber",
+      a.initial_balance AS "initialBalance", a.archived,
       a.initial_balance + COALESCE((
         SELECT SUM(CASE
           WHEN t.type = 'income' AND t.account_id = a.id THEN t.amount
@@ -61,7 +62,6 @@ export async function getAccounts(): Promise<AccountWithBalance[]> {
     FROM accounts a
     WHERE a.user_id = ${user.id}
     ORDER BY a.archived, a.id`);
-  return rows.map((r) => ({ ...r, archived: !!r.archived }));
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -77,14 +77,13 @@ export async function getCategories(): Promise<Category[]> {
     })
     .from(categories)
     .where(eq(categories.userId, user.id))
-    .orderBy(asc(categories.kind), asc(categories.id))
-    .all();
+    .orderBy(asc(categories.kind), asc(categories.id));
 }
 
 /** Total pengeluaran per kategori dalam satu bulan, terbesar dulu. */
 export async function getCategorySpend(month = thisMonth()) {
   const user = await requireUser();
-  return db.all<{ id: number; name: string; icon: string | null; color: string | null; total: number }>(sql`
+  return all<{ id: number; name: string; icon: string | null; color: string | null; total: number }>(db, sql`
     SELECT c.id, c.name, c.icon, c.color, SUM(t.amount) AS total
     FROM transactions t JOIN categories c ON c.id = t.category_id
     WHERE t.user_id = ${user.id} AND t.type = 'expense' AND substr(t.date, 1, 7) = ${month}
@@ -93,13 +92,13 @@ export async function getCategorySpend(month = thisMonth()) {
 
 export async function getDashboardPrefs() {
   const user = await requireUser();
-  const row = db.select({ prefs: users.dashboardPrefs }).from(users).where(eq(users.id, user.id)).get();
+  const [row] = await db.select({ prefs: users.dashboardPrefs }).from(users).where(eq(users.id, user.id));
   return parsePrefs(row?.prefs);
 }
 
 export async function getMonthTotals(month = thisMonth()) {
   const user = await requireUser();
-  const row = db.get<{ income: number; expense: number }>(sql`
+  const row = await one<{ income: number; expense: number }>(db, sql`
     SELECT COALESCE(SUM(CASE WHEN type = 'income' THEN amount END), 0) AS income,
            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount END), 0) AS expense
     FROM transactions WHERE user_id = ${user.id} AND substr(date, 1, 7) = ${month}`);
@@ -111,7 +110,7 @@ export async function getCashflow(count = 6) {
   const user = await requireUser();
   const last = thisMonth();
   const first = shiftMonth(last, -(count - 1));
-  const rows = db.all<{ month: string; income: number; expense: number }>(sql`
+  const rows = await all<{ month: string; income: number; expense: number }>(db, sql`
     SELECT substr(date, 1, 7) AS month,
            COALESCE(SUM(CASE WHEN type = 'income' THEN amount END), 0) AS income,
            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount END), 0) AS expense
@@ -134,13 +133,13 @@ export async function getTransactions({ month, accountId, q, limit }: TxFilter =
   if (accountId) where.push(sql`(t.account_id = ${accountId} OR t.to_account_id = ${accountId})`);
   if (q) {
     const like = `%${q.replace(/[%_\\]/g, "\\$&")}%`;
-    where.push(sql`(t.note LIKE ${like} ESCAPE '\\' OR c.name LIKE ${like} ESCAPE '\\')`);
+    where.push(sql`(t.note ILIKE ${like} ESCAPE '\\' OR c.name ILIKE ${like} ESCAPE '\\')`);
   }
-  return db.all<TxRow>(sql`
+  return all<TxRow>(db, sql`
     SELECT t.id, t.type, t.amount, t.date, t.note,
-           t.account_id AS accountId, a.name AS accountName,
-           t.to_account_id AS toAccountId, ta.name AS toAccountName,
-           t.category_id AS categoryId, c.name AS categoryName, c.icon AS categoryIcon, c.color AS categoryColor
+           t.account_id AS "accountId", a.name AS "accountName",
+           t.to_account_id AS "toAccountId", ta.name AS "toAccountName",
+           t.category_id AS "categoryId", c.name AS "categoryName", c.icon AS "categoryIcon", c.color AS "categoryColor"
     FROM transactions t
     JOIN accounts a ON a.id = t.account_id
     LEFT JOIN accounts ta ON ta.id = t.to_account_id

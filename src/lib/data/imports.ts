@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
+import { all } from "@/db/client";
 import { accounts, importBatches, importRows } from "@/db/schema";
 import { requireUser } from "@/lib/dal";
 
@@ -8,17 +9,17 @@ import { requireUser } from "@/lib/dal";
  * Status draft mengikuti isi tabel transaksi: baris yang sudah masuk lewat file lain jadi "duplicate",
  * dan baris "duplicate" yang transaksinya sudah dihapus kembali jadi draft.
  */
-function syncImportStatuses(userId: number) {
+async function syncImportStatuses(userId: number) {
   const taken = sql`(SELECT import_hash FROM transactions WHERE user_id = ${userId} AND import_hash IS NOT NULL)`;
-  db.run(sql`UPDATE import_rows SET status = 'duplicate' WHERE user_id = ${userId} AND status = 'draft' AND hash IN ${taken}`);
-  db.run(sql`UPDATE import_rows SET status = 'draft' WHERE user_id = ${userId} AND status = 'duplicate' AND hash NOT IN ${taken}`);
+  await db.execute(sql`UPDATE import_rows SET status = 'duplicate' WHERE user_id = ${userId} AND status = 'draft' AND hash IN ${taken}`);
+  await db.execute(sql`UPDATE import_rows SET status = 'draft' WHERE user_id = ${userId} AND status = 'duplicate' AND hash NOT IN ${taken}`);
 }
 
 /** Semua unggahan milik user, terbaru dulu, dengan jumlah baris per status. */
 export async function listImportBatches() {
   const user = await requireUser();
-  syncImportStatuses(user.id);
-  return db.all<{
+  await syncImportStatuses(user.id);
+  return all<{
     id: number;
     fileName: string;
     fileType: "csv" | "pdf";
@@ -29,22 +30,24 @@ export async function listImportBatches() {
     drafts: number;
     imported: number;
     duplicates: number;
-  }>(sql`
-    SELECT b.id, b.file_name AS fileName, b.file_type AS fileType, b.period_from AS periodFrom, b.period_to AS periodTo,
-           b.created_at AS createdAt, a.name AS accountName,
-           SUM(r.status = 'draft') AS drafts, SUM(r.status = 'imported') AS imported, SUM(r.status = 'duplicate') AS duplicates
+  }>(db, sql`
+    SELECT b.id, b.file_name AS "fileName", b.file_type AS "fileType", b.period_from AS "periodFrom", b.period_to AS "periodTo",
+           b.created_at AS "createdAt", a.name AS "accountName",
+           COUNT(r.id) FILTER (WHERE r.status = 'draft') AS drafts,
+           COUNT(r.id) FILTER (WHERE r.status = 'imported') AS imported,
+           COUNT(r.id) FILTER (WHERE r.status = 'duplicate') AS duplicates
     FROM import_batches b
     JOIN accounts a ON a.id = b.account_id
     LEFT JOIN import_rows r ON r.batch_id = b.id
     WHERE b.user_id = ${user.id}
-    GROUP BY b.id
+    GROUP BY b.id, a.name
     ORDER BY b.id DESC`);
 }
 
 export async function getImportBatch(id: number) {
   const user = await requireUser();
-  syncImportStatuses(user.id);
-  const batch = db
+  await syncImportStatuses(user.id);
+  const [batch] = await db
     .select({
       id: importBatches.id,
       fileName: importBatches.fileName,
@@ -59,10 +62,9 @@ export async function getImportBatch(id: number) {
     })
     .from(importBatches)
     .innerJoin(accounts, eq(accounts.id, importBatches.accountId))
-    .where(and(eq(importBatches.id, id), eq(importBatches.userId, user.id)))
-    .get();
+    .where(and(eq(importBatches.id, id), eq(importBatches.userId, user.id)));
   if (!batch) return null;
-  const rows = db
+  const rows = await db
     .select({
       id: importRows.id,
       date: importRows.date,
@@ -79,8 +81,7 @@ export async function getImportBatch(id: number) {
     })
     .from(importRows)
     .where(eq(importRows.batchId, id))
-    .orderBy(asc(importRows.position))
-    .all();
+    .orderBy(asc(importRows.position));
   return { ...batch, rows };
 }
 

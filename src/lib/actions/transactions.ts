@@ -41,38 +41,37 @@ export async function saveTransaction(_prev: TxFormState, formData: FormData): P
   const d = parsed.data;
 
   // Semua id dari form dicek kepemilikannya terhadap user dari sesi.
-  const ownAccount = (id: number) =>
-    db.select({ id: accounts.id }).from(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, user.id))).get();
-  if (!ownAccount(d.accountId)) return { error: "Akun tidak ditemukan." };
+  const ownAccount = async (id: number) =>
+    (await db.select({ id: accounts.id }).from(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, user.id)))).length > 0;
+  if (!(await ownAccount(d.accountId))) return { error: "Akun tidak ditemukan." };
 
   let toAccountId: number | null = null;
   let categoryId: number | null = null;
   if (d.type === "transfer") {
     if (!d.toAccountId) return { error: "Pilih akun tujuan transfer." };
     if (d.toAccountId === d.accountId) return { error: "Akun asal dan tujuan harus berbeda." };
-    if (!ownAccount(d.toAccountId)) return { error: "Akun tujuan tidak ditemukan." };
+    if (!(await ownAccount(d.toAccountId))) return { error: "Akun tujuan tidak ditemukan." };
     toAccountId = d.toAccountId;
   } else {
     if (!d.categoryId) return { error: "Pilih kategori." };
-    const cat = db
+    const [cat] = await db
       .select({ kind: categories.kind })
       .from(categories)
-      .where(and(eq(categories.id, d.categoryId), eq(categories.userId, user.id)))
-      .get();
+      .where(and(eq(categories.id, d.categoryId), eq(categories.userId, user.id)));
     if (!cat || cat.kind !== d.type) return { error: "Kategori tidak cocok dengan jenis transaksi." };
     categoryId = d.categoryId;
   }
 
   const values = { type: d.type, accountId: d.accountId, toAccountId, categoryId, amount: d.amount, date: d.date, note: d.note ?? null };
   if (d.id) {
-    const res = db
+    const res = await db
       .update(transactions)
-      .set({ ...values, updatedAt: sql`(datetime('now'))` })
+      .set({ ...values, updatedAt: sql`to_char(now() at time zone 'utc', 'YYYY-MM-DD HH24:MI:SS')` })
       .where(and(eq(transactions.id, d.id), eq(transactions.userId, user.id)))
-      .run();
-    if (res.changes === 0) return { error: "Transaksi tidak ditemukan." };
+      .returning({ id: transactions.id });
+    if (res.length === 0) return { error: "Transaksi tidak ditemukan." };
   } else {
-    db.insert(transactions).values({ ...values, userId: user.id }).run();
+    await db.insert(transactions).values({ ...values, userId: user.id });
   }
 
   refresh();
@@ -82,15 +81,17 @@ export async function saveTransaction(_prev: TxFormState, formData: FormData): P
 export async function deleteTransaction(id: number): Promise<TxFormState> {
   const user = await requireUser();
   // Transaksi hasil impor yang dihapus kembali menjadi draft di daftar impornya.
-  db.update(importRows)
-    .set({ status: "draft", transactionId: null })
-    .where(and(eq(importRows.transactionId, id), eq(importRows.userId, user.id)))
-    .run();
-  const res = db
-    .delete(transactions)
-    .where(and(eq(transactions.id, id), eq(transactions.userId, user.id)))
-    .run();
-  if (res.changes === 0) return { error: "Transaksi tidak ditemukan." };
+  const res = await db.transaction(async (tx) => {
+    await tx
+      .update(importRows)
+      .set({ status: "draft", transactionId: null })
+      .where(and(eq(importRows.transactionId, id), eq(importRows.userId, user.id)));
+    return tx
+      .delete(transactions)
+      .where(and(eq(transactions.id, id), eq(transactions.userId, user.id)))
+      .returning({ id: transactions.id });
+  });
+  if (res.length === 0) return { error: "Transaksi tidak ditemukan." };
   refresh();
   return { savedAt: Date.now() };
 }

@@ -1,6 +1,6 @@
 // Penjadwal peringatan harian: setiap hari pukul 07.00 WIB, buat peringatan untuk semua user aktif
 // lalu kirim push untuk yang belum terkirim. Dijalankan dari src/instrumentation.ts.
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { createDb, type Db } from "@/db/client";
 import { notifications, users } from "@/db/schema";
 import { generateAlerts, jakartaToday } from "./alerts";
@@ -13,13 +13,12 @@ const jakartaHour = () => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "A
 export async function runDailyAlerts(db: Db, day = jakartaToday()) {
   let created = 0;
   let pushed = 0;
-  for (const u of db.select({ id: users.id }).from(users).where(eq(users.active, true)).all()) {
-    created += generateAlerts(db, u.id, day);
-    const pending = db
+  for (const u of await db.select({ id: users.id }).from(users).where(eq(users.active, true))) {
+    created += await generateAlerts(db, u.id, day);
+    const pending = await db
       .select()
       .from(notifications)
-      .where(and(eq(notifications.userId, u.id), eq(notifications.day, day), isNull(notifications.pushedAt)))
-      .all();
+      .where(and(eq(notifications.userId, u.id), eq(notifications.day, day), isNull(notifications.pushedAt)));
     if (pending.length === 0) continue;
     // Satu push ringkas per user per hari, bukan satu per peringatan.
     const first = pending[0];
@@ -30,7 +29,10 @@ export async function runDailyAlerts(db: Db, day = jakartaToday()) {
       tag: `harian-${day}`,
     });
     if (res.sent > 0) {
-      for (const p of pending) db.update(notifications).set({ pushedAt: new Date().toISOString() }).where(eq(notifications.id, p.id)).run();
+      await db
+        .update(notifications)
+        .set({ pushedAt: new Date().toISOString() })
+        .where(inArray(notifications.id, pending.map((p) => p.id)));
       pushed++;
     }
   }

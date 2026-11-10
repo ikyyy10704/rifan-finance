@@ -20,9 +20,9 @@ let dummyHash: Promise<string> | undefined;
 const getDummyHash = () => (dummyHash ??= hash("rifan-finance-dummy-password"));
 
 /** Pesan blokir bila sudah 5 kali gagal dalam 15 menit terakhir (password atau kode 2FA). */
-function lockMessage(username: string): string | null {
+async function lockMessage(username: string): Promise<string | null> {
   const now = Date.now();
-  const failures = db
+  const failures = await db
     .select({ createdAt: loginAttempts.createdAt })
     .from(loginAttempts)
     .where(
@@ -32,8 +32,7 @@ function lockMessage(username: string): string | null {
         gt(loginAttempts.createdAt, new Date(now - WINDOW_MS)),
       ),
     )
-    .orderBy(loginAttempts.createdAt)
-    .all();
+    .orderBy(loginAttempts.createdAt);
   if (failures.length < MAX_FAILURES) return null;
   const unlockAt = failures[failures.length - MAX_FAILURES].createdAt.getTime() + WINDOW_MS;
   const minutes = Math.max(1, Math.ceil((unlockAt - now) / 60000));
@@ -42,7 +41,7 @@ function lockMessage(username: string): string | null {
 
 async function recordAttempt(username: string, success: boolean) {
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
-  db.insert(loginAttempts).values({ username, ip, success, createdAt: new Date() }).run();
+  await db.insert(loginAttempts).values({ username, ip, success, createdAt: new Date() });
 }
 
 /** Satu action untuk tiga tombol di halaman login: password, kode 2FA, dan batal ke tahap password. */
@@ -62,10 +61,10 @@ export async function login(prev: LoginState, formData: FormData): Promise<Login
   if (!parsed.success) return { error: parsed.error.issues[0].message, username: typed };
 
   const { username, password } = parsed.data;
-  const locked = lockMessage(username);
+  const locked = await lockMessage(username);
   if (locked) return { error: locked, username: typed };
 
-  const user = db.select().from(users).where(eq(users.username, username)).get();
+  const [user] = await db.select().from(users).where(eq(users.username, username));
   const ok = user
     ? await verify(user.passwordHash, password)
     : (await verify(await getDummyHash(), password), false);
@@ -93,13 +92,13 @@ async function verifyLoginCode(prev: LoginState, formData: FormData): Promise<Lo
     return { step: "password", username: prev.username, error: "Waktu memasukkan kode habis. Masuk lagi dengan password." };
   }
 
-  const locked = lockMessage(challenge.username);
+  const locked = await lockMessage(challenge.username);
   if (locked) {
     await clearChallenge();
     return { step: "password", username: prev.username, error: locked };
   }
 
-  const ok = verifyUserTotp(challenge.userId, String(formData.get("code") ?? ""));
+  const ok = await verifyUserTotp(challenge.userId, String(formData.get("code") ?? ""));
   await recordAttempt(challenge.username, ok);
   if (!ok) {
     return { step: "code", username: prev.username, error: "Kode salah atau sudah kedaluwarsa. Cek kode terbaru di aplikasi authenticator." };

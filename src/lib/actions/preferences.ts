@@ -11,6 +11,6 @@ export async function saveDashboardPrefs(prefs: DashboardPrefs) {
   const user = await requireUser();
   // Hanya id widget yang dikenal dan nilai boolean yang disimpan.
   const clean = Object.fromEntries(WIDGETS.map((w) => [w.id, prefs[w.id] === true]));
-  db.update(users).set({ dashboardPrefs: JSON.stringify(clean) }).where(eq(users.id, user.id)).run();
+  await db.update(users).set({ dashboardPrefs: JSON.stringify(clean) }).where(eq(users.id, user.id));
   refresh();
 }
