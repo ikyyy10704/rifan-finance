@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B4D3B">
+<title>Rifan Finance — Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --g900:#073B2E; --g800:#0B4D3B; --g700:#13624B;
+  --lime:#D4EE6E; --lime2:#C3E04F;
+  --bg:#F2F5F1; --ink:#0F1F1A; --muted:#5B6B66; --line:#E3E9E5;
+  --red:#D94841; --blue:#2F7BD9; --amber:#D99A1E; --green:#1E9E6A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);font-size:14px;
+  background:linear-gradient(180deg,#D7EE78 0%,#3E8A4E 55%,#0B4D3B 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px}
+button{font-family:inherit;cursor:pointer}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+.phone{width:390px;height:844px;background:var(--bg);border-radius:48px;border:10px solid #111;box-shadow:0 30px 80px rgba(0,0,0,.35);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;padding-bottom:110px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.screen{display:none}
+.screen.on{display:block}
+
+/* home header */
+.head{background:var(--g800);color:#fff;border-radius:0 0 32px 32px;padding:20px 20px 22px}
+.hello{display:flex;align-items:center;gap:12px}
+.av{width:42px;height:42px;border-radius:50%;background:var(--lime);color:var(--g900);display:grid;place-items:center;font-weight:800;border:2px solid rgba(255,255,255,.4)}
+.hello div{line-height:1.25;font-size:13px;color:#CFE0D9}
+.hello b{color:#fff;font-size:15px;display:block}
+.bell{margin-left:auto;width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);border:0;color:var(--lime);display:grid;place-items:center}
+.balance{text-align:center;margin:22px 0 18px}
+.balance small{color:var(--lime);font-weight:500}
+.balance div{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.balance strong{font-size:32px;font-weight:800;letter-spacing:-.8px}
+.eye{background:none;border:0;color:var(--lime);padding:4px}
+.hbtns{display:flex;gap:12px;justify-content:center}
+.hbtn{height:44px;min-width:120px;padding:0 18px;border-radius:12px;border:0;background:var(--lime);color:var(--g900);font-weight:700;font-size:15px}
+.accs{background:rgba(255,255,255,.1);border-radius:20px;padding:14px;margin-top:20px}
+.accs p{margin:0 0 10px;font-weight:600}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.chip{height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-weight:600;font-size:12px;white-space:nowrap}
+.chip.on{background:var(--lime);border-color:var(--lime);color:var(--g900)}
+.chip.add{background:var(--g900);border-color:var(--g900);display:inline-flex;align-items:center;gap:6px}
+
+.pad{padding:16px}
+.card{background:#fff;border-radius:22px;padding:18px;margin-bottom:14px}
+.qa{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;text-align:center}
+.qa button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink);padding:4px 0}
+.ring{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;border:1.5px solid}
+.c-green{color:var(--green);border-color:var(--green)}
+.c-red{color:var(--red);border-color:var(--red)}
+.c-blue{color:var(--blue);border-color:var(--blue)}
+.c-amber{color:var(--amber);border-color:var(--amber)}
+.ch{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ch h2{margin:0;font-size:15px}
+.ch a{color:var(--g700);font-weight:700;font-size:13px;text-decoration:none}
+.tx{list-style:none;margin:0;padding:0}
+.tx li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.tx li:first-child{border-top:0;padding-top:0}
+.ic{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ic svg.i{width:20px;height:20px}
+.meta{flex:1;min-width:0}
+.meta b{display:block;font-size:13.5px}
+.meta small{color:var(--muted);font-size:12px}
+.amt{text-align:right;white-space:nowrap;font-size:13.5px}
+.amt b{display:block}
+.amt small{color:var(--muted);font-size:11.5px}
+.plus{color:var(--green)}
+.bg-g{background:#E3F4EC;color:var(--green)}.bg-r{background:#FBE7E6;color:var(--red)}.bg-b{background:#E4EEFB;color:var(--blue)}.bg-a{background:#FBF0DA;color:var(--amber)}.bg-l{background:#F1F8D6;color:var(--g800)}
+.minihd{display:flex;gap:10px}
+.mini{flex:1;background:#fff;border-radius:18px;padding:14px}
+.mini small{color:var(--muted);font-size:12px}
+.mini b{display:block;font-size:15px;margin-top:2px}
+
+/* page title for other screens */
+.ptitle{background:var(--g800);color:#fff;padding:22px 20px 26px;border-radius:0 0 28px 28px}
+.ptitle h1{margin:0;font-size:22px}
+.ptitle p{margin:4px 0 0;color:#B9D3CA}
+
+/* calendar */
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.calnav b{font-size:15px}
+.calnav button{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--g800);display:grid;place-items:center}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.cal .dn{font-size:11px;color:var(--muted);font-weight:600;padding-bottom:4px}
+.cal button{aspect-ratio:1;border:0;border-radius:12px;background:transparent;font-weight:600;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink);position:relative}
+.cal button .m{width:5px;height:5px;border-radius:50%}
+.cal button.heat1{background:#F1F8D6}.cal button.heat2{background:#DDEFA3}.cal button.heat3{background:#C3E04F}
+.cal button.sel{background:var(--g800);color:#fff}
+.key{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:12px}
+.key i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+/* plans */
+.plan{background:#fff;border-radius:20px;padding:16px;margin-bottom:12px}
+.ptop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.ptop b{display:block;font-size:15px}
+.ptop small{color:var(--muted);font-size:12px}
+.tag{font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;white-space:nowrap}
+.t-hi{background:#FBE7E6;color:#A8322C}.t-md{background:#FBF0DA;color:#8A5E08}.t-lo{background:#E3F4EC;color:#146B47}
+.bar{height:8px;background:#EAF0EC;border-radius:8px;overflow:hidden;margin:12px 0 8px}
+.bar i{display:block;height:100%;background:var(--g800);border-radius:8px}
+.bar i.warn{background:var(--amber)}.bar i.over{background:var(--red)}
+.pfoot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.pfoot b{color:var(--ink)}
+.pbtns{display:flex;gap:8px;margin-top:12px}
+.sbtn{flex:1;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;color:var(--g800);font-size:13px}
+.sbtn.pri{background:var(--g800);border-color:var(--g800);color:#fff}
+.summary{display:flex;gap:10px;margin-top:16px}
+.summary div{flex:1;background:rgba(255,255,255,.1);border-radius:14px;padding:10px 12px}
+.summary small{color:#B9D3CA;font-size:11.5px}
+.summary b{display:block;font-size:15px}
+
+/* report */
+.seg{display:flex;background:#fff;border-radius:14px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;height:36px;border:0;border-radius:10px;background:transparent;font-weight:700;color:var(--muted)}
+.seg button.on{background:var(--g800);color:#fff}
+.donut{display:flex;align-items:center;gap:16px}
+.donut svg{width:132px;height:132px;flex:none}
+.leg{flex:1;display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.leg div{display:flex;justify-content:space-between;gap:6px}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.bud .row{display:flex;justify-content:space-between;font-size:12.5px}
+.bud .row span{color:var(--muted)}
+.bud>div{margin-bottom:12px}
+.bud .bar{margin:6px 0 0}
+
+/* bottom nav */
+.bnav{position:absolute;left:12px;right:12px;bottom:14px;background:var(--g900);border-radius:26px;height:72px;display:flex;align-items:center;justify-content:space-around;padding:0 6px;z-index:5}
+.bnav button{background:none;border:0;color:#9FBEB2;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;min-width:58px}
+.bnav button.on{color:var(--lime)}
+.bnav .fab{width:62px;height:62px;border-radius:50%;background:var(--lime);color:var(--g900);display:grid;place-items:center;margin-top:-34px;border:6px solid var(--bg);min-width:0}
+.bnav .fab svg.i{width:28px;height:28px;stroke-width:2.2}
+
+/* sheet */
+.veil{position:absolute;inset:0;background:rgba(7,59,46,.45);opacity:0;pointer-events:none;transition:.2s;z-index:8}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:28px 28px 0 0;padding:10px 20px 24px;transform:translateY(100%);transition:.25s;z-index:9}
+.open .veil{opacity:1;pointer-events:auto}
+.open .sheet{transform:none}
+.grab{width:44px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0 0 14px;font-size:18px}
+.types{display:flex;gap:8px;margin-bottom:14px}
+.types button{flex:1;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;font-weight:700;color:var(--muted)}
+.types button.on{background:var(--g800);border-color:var(--g800);color:#fff}
+.field{display:block;margin-bottom:12px}
+.field span{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.field input,.field select{width:100%;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:inherit;color:var(--ink);background:#fff}
+.field input.big{font-size:22px;font-weight:800;height:56px}
+.two{display:flex;gap:10px}.two .field{flex:1;min-width:0}
+.save{width:100%;height:50px;border:0;border-radius:14px;background:var(--lime);color:var(--g900);font-weight:800;font-size:15px;margin-top:4px}
+
+@media (max-width:480px){
+  body{padding:0;background:var(--bg);display:block}
+  .phone{width:100%;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="scroll" id="scroll">
+
+    <!-- BERANDA -->
+    <section class="screen on" id="s-home" aria-label="Beranda">
+      <div class="head">
+        <div class="hello">
+          <div class="av">IR</div>
+          <div>Halo,<b>Irfan Rifan</b></div>
+          <button class="bell" aria-label="Notifikasi"><svg class="i" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
+        </div>
+        <div class="balance">
+          <small>Total Saldo Anda</small>
+          <div><strong id="bal" data-v="Rp24.750.000">Rp24.750.000</strong>
+          <button class="eye" id="eye" aria-label="Sembunyikan saldo"><svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        </div>
+        <div class="hbtns">
+          <button class="hbtn" data-open>Catat</button>
+          <button class="hbtn">Transfer</button>
+        </div>
+        <div class="accs">
+          <p>Akun Anda</p>
+          <div class="chips">
+            <button class="chip on">Semua</button><button class="chip">BRI</button><button class="chip">Tunai</button><button class="chip">GoPay</button>
+            <button class="chip add"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Tambah</button>
+          </div>
+        </div>
+      </div>
+      <div class="pad">
+        <div class="card">
+          <div class="qa">
+            <button data-open><span class="ring c-green"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg></span>Pemasukan</button>
+            <button data-open><span class="ring c-red"><svg class="i" viewBox="0 0 24 24"><path d="M12 20V8M7 13l5-5 5 5M5 4h14"/></svg></span>Pengeluaran</button>
+            <button><span class="ring c-blue"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg></span>Import BRI</button>
+            <button data-go="plan"><span class="ring c-amber"><svg class="i" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg></span>Rencana</button>
+          </div>
+        </div>
+        <div class="minihd" style="margin-bottom:14px">
+          <div class="mini"><small>Pemasukan Nov</small><b class="plus">Rp9.500.000</b></div>
+          <div class="mini"><small>Pengeluaran Nov</small><b>Rp4.320.000</b></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Transaksi Terakhir</h2><a href="#">Lihat semua</a></div>
+          <ul class="tx">
+            <li><span class="ic bg-r"><svg class="i" viewBox="0 0 24 24"><path d="M4 11h16M6 11a6 6 0 0 0 12 0M12 3v4"/></svg></span><div class="meta"><b>Makan siang</b><small>Makan · GoPay</small></div><div class="amt"><b>−Rp45.000</b><small>8 Nov</small></div></li>
+            <li><span class="ic bg-a"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></span><div class="meta"><b>Token listrik PLN</b><small>Tagihan · BRI</small></div><div class="amt"><b>−Rp250.000</b><small>7 Nov</small></div></li>
+            <li><span class="ic bg-b"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg></span><div class="meta"><b>Isi saldo GoPay</b><small>Transfer · BRI → GoPay</small></div><div class="amt"><b>Rp500.000</b><small>6 Nov</small></div></li>
+            <li><span class="ic bg-l"><svg class="i" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg></span><div class="meta"><b>Belanja bulanan</b><small>Kebutuhan rumah · Tunai</small></div><div class="amt"><b>−Rp612.000</b><small>5 Nov</small></div></li>
+            <li><span class="ic bg-g"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></span><div class="meta"><b>Gaji November</b><small>Pemasukan · BRI</small></div><div class="amt"><b class="plus">+Rp8.500.000</b><small>1 Nov</small></div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- KALENDER -->
+    <section class="screen" id="s-cal" aria-label="Kalender">
+      <div class="ptitle"><h1>Kalender Keuangan</h1><p>Pengeluaran harian, tagihan, dan target beli</p></div>
+      <div class="pad">
+        <div class="card">
+          <div class="calnav">
+            <button aria-label="Bulan sebelumnya"><svg class="i" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
+            <b>November 2026</b>
+            <button aria-label="Bulan berikutnya"><svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+          </div>
+          <div class="cal" id="cal"></div>
+          <div class="key"><span><i style="background:#C3E04F;border-radius:2px"></i>Pengeluaran besar</span><span><i style="background:var(--red)"></i>Tagihan</span><span><i style="background:var(--green)"></i>Pemasukan</span><span><i style="background:var(--amber)"></i>Target beli</span></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2 id="dayTitle">Minggu, 8 November</h2><a href="#" data-open>+ Tambah</a></div>
+          <ul class="tx" id="dayList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- RENCANA -->
+    <section class="screen" id="s-plan" aria-label="Rencana pembelian">
+      <div class="ptitle"><h1>Rencana Pembelian</h1><p>Tabung sedikit demi sedikit untuk barang impian</p>
+        <div class="summary"><div><small>Total target</small><b>Rp17.850.000</b></div><div><small>Terkumpul</small><b>Rp6.650.000</b></div></div>
+      </div>
+      <div class="pad">
+        <div class="plan">
+          <div class="ptop"><div><b>Laptop kerja</b><small>Target Juni 2027 · Rp12.000.000</small></div><span class="tag t-hi">Tinggi</span></div>
+          <div class="bar"><i style="width:40%"></i></div>
+          <div class="pfoot"><span>Terkumpul <b>Rp4.800.000</b> · 40%</span><span>Rp1.030.000/bln</span></div>
+          <div class="pbtns"><button class="sbtn">+ Sisihkan dana</button><button class="sbtn pri">Sudah dibeli</button></div>
+        </div>
+        <div class="plan">
+          <div class="ptop"><div><b>Helm baru</b><small>Target Desember 2026 · Rp850.000</small></div><span class="tag t-md">Sedang</span></div>
+          <div class="bar"><i style="width:71%"></i></div>
+          <div class="pfoot"><span>Terkumpul <b>Rp600.000</b> · 71%</span><span>Rp250.000/bln</span></div>
+          <div class="pbtns"><button class="sbtn">+ Sisihkan dana</button><button class="sbtn pri">Sudah dibeli</button></div>
+        </div>
+        <div class="plan">
+          <div class="ptop"><div><b>Liburan ke Bali</b><small>Target Maret 2027 · Rp5.000.000</small></div><span class="tag t-lo">Rendah</span></div>
+          <div class="bar"><i style="width:25%"></i></div>
+          <div class="pfoot"><span>Terkumpul <b>Rp1.250.000</b> · 25%</span><span>Rp937.500/bln</span></div>
+          <div class="pbtns"><button class="sbtn">+ Sisihkan dana</button><button class="sbtn pri">Sudah dibeli</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LAPORAN -->
+    <section class="screen" id="s-rep" aria-label="Laporan">
+      <div class="ptitle"><h1>Laporan</h1><p>November 2026</p></div>
+      <div class="pad">
+        <div class="seg"><button class="on">Pengeluaran</button><button>Pemasukan</button></div>
+        <div class="card">
+          <div class="ch"><h2>Per kategori</h2><b>Rp4.320.000</b></div>
+          <div class="donut">
+            <svg viewBox="0 0 42 42" role="img" aria-label="Komposisi pengeluaran per kategori">
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#EAF0EC" stroke-width="6"/>
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#0B4D3B" stroke-width="6" stroke-dasharray="34 66" stroke-dashoffset="25"/>
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#C3E04F" stroke-width="6" stroke-dasharray="20 80" stroke-dashoffset="-9"/>
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#D99A1E" stroke-width="6" stroke-dasharray="14 86" stroke-dashoffset="-29"/>
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#2F7BD9" stroke-width="6" stroke-dasharray="10 90" stroke-dashoffset="-43"/>
+              <circle cx="21" cy="21" r="15.9" fill="none" stroke="#9FB3AC" stroke-width="6" stroke-dasharray="22 78" stroke-dashoffset="-53"/>
+            </svg>
+            <div class="leg">
+              <div><span><i style="background:#0B4D3B"></i>Makan</span><b>34%</b></div>
+              <div><span><i style="background:#C3E04F"></i>Tagihan</span><b>20%</b></div>
+              <div><span><i style="background:#D99A1E"></i>Transportasi</span><b>14%</b></div>
+              <div><span><i style="background:#2F7BD9"></i>Hiburan</span><b>10%</b></div>
+              <div><span><i style="background:#9FB3AC"></i>Lainnya</span><b>22%</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="card bud">
+          <div class="ch"><h2>Anggaran</h2><a href="#">Atur</a></div>
+          <div><div class="row"><b>Makan</b><span>Rp1.450.000 / Rp2.000.000</span></div><div class="bar"><i style="width:72%"></i></div></div>
+          <div><div class="row"><b>Transportasi</b><span>Rp620.000 / Rp800.000</span></div><div class="bar"><i class="warn" style="width:78%"></i></div></div>
+          <div><div class="row"><b>Hiburan</b><span>Rp410.000 / Rp400.000</span></div><div class="bar"><i class="over" style="width:100%"></i></div></div>
+          <div style="margin-bottom:0"><div class="row"><b>Tagihan</b><span>Rp850.000 / Rp1.200.000</span></div><div class="bar"><i style="width:71%"></i></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="bnav" aria-label="Navigasi bawah">
+    <button class="on" data-go="home"><svg class="i" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</button>
+    <button data-go="cal"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Kalender</button>
+    <button class="fab" data-open aria-label="Catat transaksi"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button data-go="plan"><svg class="i" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>Rencana</button>
+    <button data-go="rep"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Laporan</button>
+  </nav>
+
+  <div class="veil" id="veil"></div>
+  <form class="sheet" id="sheet" aria-label="Catat transaksi" onsubmit="event.preventDefault();closeSheet()">
+    <div class="grab"></div>
+    <h2>Catat Transaksi</h2>
+    <div class="types" id="types"><button type="button">Pemasukan</button><button type="button" class="on">Pengeluaran</button><button type="button">Transfer</button></div>
+    <label class="field"><span>Nominal</span><input class="big" inputmode="numeric" placeholder="Rp0" id="amt"></label>
+    <div class="two">
+      <label class="field"><span>Kategori</span><select><option>Makan</option><option>Transportasi</option><option>Tagihan</option><option>Hiburan</option><option>Kebutuhan rumah</option></select></label>
+      <label class="field"><span>Akun</span><select><option>BRI Tabungan</option><option>GoPay</option><option>Tunai</option></select></label>
+    </div>
+    <div class="two">
+      <label class="field"><span>Tanggal</span><input type="date" value="2026-11-08"></label>
+      <label class="field"><span>Catatan</span><input placeholder="Opsional"></label>
+    </div>
+    <button class="save" type="submit">Simpan</button>
+  </form>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+// Navigasi layar
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.go;
+  $$('.screen').forEach(s=>s.classList.toggle('on',s.id==='s-'+k));
+  $$('.bnav [data-go]').forEach(n=>n.classList.toggle('on',n.dataset.go===k));
+  $('#scroll').scrollTop=0;
+}));
+// Sheet catat transaksi
+const phone=$('#phone');
+$$('[data-open]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();phone.classList.add('open');}));
+function closeSheet(){phone.classList.remove('open');}
+$('#veil').addEventListener('click',closeSheet);
+$$('#types button').forEach(b=>b.addEventListener('click',()=>{$$('#types button').forEach(x=>x.classList.toggle('on',x===b));}));
+// Format nominal ke Rupiah
+$('#amt').addEventListener('input',e=>{const n=e.target.value.replace(/\D/g,'');e.target.value=n?'Rp'+Number(n).toLocaleString('id-ID'):'';});
+// Saldo tersembunyi
+$('#eye').addEventListener('click',()=>{const b=$('#bal');b.textContent=b.textContent.startsWith('Rp•')?b.dataset.v:'Rp•••••••';});
+
+// Kalender (contoh data November 2026; 1 Nov = Minggu, minggu dimulai Senin)
+const spend={1:0,2:85000,3:120000,4:60000,5:612000,6:40000,7:250000,8:45000};
+const marks={1:'var(--green)',5:'var(--red)',10:'var(--red)',15:'var(--red)',28:'var(--amber)'};
+const items={
+  1:[['bg-g','Gaji November','Pemasukan · BRI','+Rp8.500.000',1]],
+  5:[['bg-l','Belanja bulanan','Kebutuhan rumah · Tunai','−Rp612.000'],['bg-r','Tagihan air PDAM','Tagihan · jatuh tempo','Rp95.000']],
+  7:[['bg-a','Token listrik PLN','Tagihan · BRI','−Rp250.000']],
+  8:[['bg-r','Makan siang','Makan · GoPay','−Rp45.000']],
+  10:[['bg-r','Bayar kos','Tagihan · jatuh tempo','Rp1.500.000']],
+  15:[['bg-r','Internet rumah','Tagihan · jatuh tempo','Rp350.000']],
+  28:[['bg-a','Target: Helm baru','Rencana pembelian','Rp850.000']]
+};
+const hari=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+let html=['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(d=>`<div class="dn">${d}</div>`).join('')+'<div></div>'.repeat(6);
+for(let d=1;d<=30;d++){const v=spend[d]||0,h=v>=500000?'heat3':v>=100000?'heat2':v>0?'heat1':'';
+  html+=`<button class="${h}${d===8?' sel':''}" data-d="${d}" aria-label="${d} November">${d}${marks[d]?`<span class="m" style="background:${marks[d]}"></span>`:''}</button>`;}
+$('#cal').innerHTML=html;
+function showDay(d){
+  $('#dayTitle').textContent=`${hari[(d-1)%7]}, ${d} November`;
+  const list=items[d]||[];
+  $('#dayList').innerHTML=list.length?list.map(([c,t,m,a,p])=>`<li><span class="ic ${c}"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg></span><div class="meta"><b>${t}</b><small>${m}</small></div><div class="amt"><b class="${p?'plus':''}">${a}</b></div></li>`).join(''):'<li><div class="meta"><small>Belum ada transaksi atau agenda di tanggal ini.</small></div></li>';
+}
+$$('#cal button').forEach(b=>b.addEventListener('click',()=>{$$('#cal button').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');showDay(+b.dataset.d);}));
+showDay(8);
+</script>
+</body>
+</html>

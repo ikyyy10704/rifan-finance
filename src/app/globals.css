@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/* Token warna diambil persis dari rifan-finance-web.html dan rifan-finance-mobile.html. */
+@theme {
+  --color-g900: #073b2e;
+  --color-g800: #0b4d3b;
+  --color-g700: #13624b;
+  --color-lime: #d4ee6e;
+  --color-lime2: #c3e04f;
+  --color-bg: #f2f5f1;
+  --color-ink: #0f1f1a;
+  --color-muted: #5b6b66;
+  --color-line: #e3e9e5;
+  --color-soft: #cfe0d9; /* teks sekunder di atas hijau tua (.hello div di mockup) */
+  --color-danger: #a8322c; /* merah gelap dari .t-hi, kontras 6:1 di atas putih untuk teks error */
+  --color-danger-bg: #fbe7e6;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+
+  /* Warna ikon kategori dan cincin aksi cepat (.c-* dan .bg-* di mockup). */
+  --color-red: #d94841;
+  --color-blue: #2f7bd9;
+  --color-amber: #d99a1e;
+  --color-green: #1e9e6a;
+  /* Teks nominal pemasukan. Hijau mockup #1E9E6A hanya 3,4:1 di atas putih, jadi digelapkan ke 5:1. */
+  --color-plus: #157f54;
+  --color-nav: #9fbeb2; /* label menu bawah yang tidak aktif */
+
+  /* Breakpoint mockup web: sidebar muncul di 820px, kolom kanan di 1100px. */
+  --breakpoint-app: 51.25rem;
+  --breakpoint-wide: 68.75rem;
+}
+
+@layer base {
+  body {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font-size: 14px;
+  }
+  /* Preflight Tailwind membuat judul setipis teks biasa; di mockup judul kartu tebal. */
+  h1,
+  h2,
+  h3 {
+    font-weight: 700;
+  }
+  button:not(:disabled),
+  a[href],
+  label[for] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-g700);
+    outline-offset: 2px;
+  }
+  .on-dark :focus-visible {
+    outline-color: var(--color-lime);
+  }
+}
+
+/* Splash: tanda R terungkap dari bawah ke atas, searah grafik batang dan panah di logo. */
+/* Tanda R terungkap dari bawah ke atas (searah grafik naik di logo) sambil mengendap ke ukuran penuh. */
+@keyframes rf-rise {
+  0% { clip-path: inset(100% 0 0 0); transform: translateY(14px) scale(0.92); opacity: 0.4; }
+  60% { opacity: 1; }
+  100% { clip-path: inset(0 0 0 0); transform: none; opacity: 1; }
+}
+@keyframes rf-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.rf-rise { animation: rf-rise 900ms cubic-bezier(0.22, 1, 0.36, 1) both; will-change: clip-path, transform; }
+.rf-fade { animation: rf-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) 520ms both; }
+.rf-fade-late { animation: rf-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both; }
+
+/* Sheet catat transaksi: naik dari bawah seperti .sheet di mockup mobile (0,25 detik). */
+.rf-sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: 92dvh;
+  border: 0;
+  padding: 0;
+  border-radius: 28px 28px 0 0;
+  background: #fff;
+  color: var(--color-ink);
+  overflow-y: auto;
+}
+.rf-sheet[open] { animation: rf-sheet-up 250ms ease-out; }
+.rf-sheet::backdrop { background: rgb(7 59 46 / 0.45); }
+@media (min-width: 51.25rem) {
+  .rf-sheet { margin: auto; max-width: 460px; border-radius: 28px; }
+}
+@keyframes rf-sheet-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-rise,
+  .rf-fade,
+  .rf-fade-late,
+  .rf-sheet[open] { animation: none; }
+}

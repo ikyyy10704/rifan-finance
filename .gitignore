@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database lokal
+/data/
+
+# file mutasi bank asli (berisi data rekening), jangan masuk Git
+*e-StatementBRImo*
