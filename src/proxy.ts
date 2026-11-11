@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pemeriksaan cepat berdasarkan cookie saja. Validasi sesi di database ada di src/lib/dal.ts.
-const PROTECTED = ["/dashboard", "/transaksi", "/akun", "/anggaran", "/laporan", "/kalender", "/rencana", "/import", "/admin", "/profil", "/kategori", "/notifikasi"];
+const PROTECTED = ["/dashboard", "/transaksi", "/akun", "/anggaran", "/laporan", "/kalender", "/rencana", "/import", "/admin", "/profil", "/kategori", "/notifikasi", "/mulai"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

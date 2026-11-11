@@ -13,7 +13,11 @@ export const users = pgTable("users", {
   id: id(),
   username: text("username").notNull().unique(),
   name: text("name").notNull(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"), // null = akun dari Google yang belum membuat password
+  googleSub: text("google_sub").unique(), // id akun Google (klaim "sub"), tetap walau email berganti
+  email: text("email"), // email Google, hanya informasi
+  // Langkah perkenalan yang sedang dikerjakan (1 profil, 2 dompet, 3 kategori). null = selesai.
+  setupStep: integer("setup_step"),
   role: text("role", { enum: ["admin", "user"] }).notNull().default("user"),
   active: boolean("active").notNull().default(true),
   avatar: text("avatar"), // versi foto (dipakai di URL ?v= untuk cache); null = tanpa foto

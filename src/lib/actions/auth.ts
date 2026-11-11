@@ -65,7 +65,8 @@ export async function login(prev: LoginState, formData: FormData): Promise<Login
   if (locked) return { error: locked, username: typed };
 
   const [user] = await db.select().from(users).where(eq(users.username, username));
-  const ok = user
+  // Akun Google tanpa password tetap melewati hash pengganti supaya waktunya sama.
+  const ok = user?.passwordHash
     ? await verify(user.passwordHash, password)
     : (await verify(await getDummyHash(), password), false);
   const success = ok && !!user?.active;
@@ -82,7 +83,7 @@ export async function login(prev: LoginState, formData: FormData): Promise<Login
   }
 
   await createSession(user!.id);
-  redirect("/dashboard");
+  redirect(user!.setupStep === null ? "/dashboard" : "/mulai");
 }
 
 async function verifyLoginCode(prev: LoginState, formData: FormData): Promise<LoginState> {

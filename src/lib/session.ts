@@ -33,6 +33,8 @@ export type SessionUser = {
   role: "admin" | "user";
   avatar: string | null;
   totpEnabled: boolean;
+  hasPassword: boolean; // false = akun Google yang belum membuat password
+  setupStep: number | null; // langkah perkenalan yang belum selesai, null = sudah selesai
 };
 
 // Null jika cookie tidak ada, sesi kedaluwarsa, sudah dihapus, atau akunnya dinonaktifkan.
@@ -52,13 +54,15 @@ export const readSession = cache(async (): Promise<SessionUser | null> => {
       role: users.role,
       avatar: users.avatar,
       totpSecret: users.totpSecret,
+      passwordHash: users.passwordHash,
+      setupStep: users.setupStep,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.id, hashToken(token)), gt(sessions.expiresAt, new Date()), eq(users.active, true)));
   if (!row) return null;
-  const { totpSecret, ...user } = row;
-  return { ...user, totpEnabled: !!totpSecret };
+  const { totpSecret, passwordHash, ...user } = row;
+  return { ...user, totpEnabled: !!totpSecret, hasPassword: !!passwordHash };
 });
 
 /** Hapus semua sesi milik user, kecuali sesi browser yang sedang dipakai (jika ada). */

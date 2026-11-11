@@ -24,7 +24,7 @@ export default function ProfilPage() {
 
 async function Profile() {
   const user = await requireUser();
-  const me = { id: user.id, name: user.name, username: user.username, avatar: user.avatar, role: user.role, totpEnabled: user.totpEnabled };
+  const me = { id: user.id, name: user.name, username: user.username, avatar: user.avatar, role: user.role, totpEnabled: user.totpEnabled, hasPassword: user.hasPassword };
   return (
     <>
       <ProfileMobile me={me} />
@@ -59,8 +59,8 @@ async function Profile() {
             </section>
           </div>
           <div className="flex flex-col gap-6">
-            <TwoFactor enabled={user.totpEnabled} />
-            <PasswordForm />
+            <TwoFactor enabled={user.totpEnabled} hasPassword={user.hasPassword} />
+            <PasswordForm hasPassword={user.hasPassword} />
           </div>
         </div>
       </div>

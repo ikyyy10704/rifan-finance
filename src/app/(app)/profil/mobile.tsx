@@ -8,7 +8,7 @@ import { Sheet } from "@/components/sheet";
 import { logout } from "@/lib/actions/auth";
 import { PasswordForm, ProfileForm, TwoFactor } from "./forms";
 
-type Me = { id: number; name: string; username: string; avatar: string | null; role: "admin" | "user"; totpEnabled: boolean };
+type Me = { id: number; name: string; username: string; avatar: string | null; role: "admin" | "user"; totpEnabled: boolean; hasPassword: boolean };
 
 const rowClass = "flex min-h-14 w-full items-center gap-3 py-2 text-left active:opacity-70";
 
@@ -52,8 +52,12 @@ export function ProfileMobile({ me }: { me: Me }) {
             </Sheet>
           </li>
           <li>
-            <Sheet title="Ganti password" buttonClassName={rowClass} button={<RowInner icon="lock" label="Ganti password" />}>
-              <PasswordForm p="m-" bare />
+            <Sheet
+              title={me.hasPassword ? "Ganti password" : "Buat password"}
+              buttonClassName={rowClass}
+              button={<RowInner icon="lock" label={me.hasPassword ? "Ganti password" : "Buat password"} />}
+            >
+              <PasswordForm p="m-" bare hasPassword={me.hasPassword} />
             </Sheet>
           </li>
           <li>
@@ -68,7 +72,7 @@ export function ProfileMobile({ me }: { me: Me }) {
                 />
               }
             >
-              <TwoFactor enabled={me.totpEnabled} p="m-" bare />
+              <TwoFactor enabled={me.totpEnabled} hasPassword={me.hasPassword} p="m-" bare />
             </Sheet>
           </li>
         </Group>

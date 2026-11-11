@@ -44,7 +44,7 @@ export async function removeAvatar() {
 // ---- Password ----
 const changeSchema = z
   .object({
-    current: z.string().min(1, "Isi password saat ini."),
+    current: z.string(),
     next: z.string().min(8, "Password baru minimal 8 karakter."),
     confirm: z.string(),
   })
@@ -58,10 +58,19 @@ export async function changePassword(_prev: ProfileState, formData: FormData): P
     confirm: formData.get("confirm") ?? "",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
-  if (!(await verify(await passwordOf(user.id), parsed.data.current))) return { error: "Password saat ini salah." };
+  // Akun Google yang belum punya password: membuat password pertama tidak butuh password lama.
+  const existing = await passwordOf(user.id);
+  if (existing) {
+    if (!parsed.data.current) return { error: "Isi password saat ini." };
+    if (!(await verify(existing, parsed.data.current))) return { error: "Password saat ini salah." };
+  }
 
   await db.update(users).set({ passwordHash: await hash(parsed.data.next) }).where(eq(users.id, user.id));
   await deleteUserSessions(user.id); // perangkat lain keluar, perangkat ini tetap masuk
+  if (!existing) {
+    refresh();
+    return { ok: `Password dibuat. Sekarang kamu juga bisa masuk dengan username @${user.username}.`, savedAt: Date.now() };
+  }
   return { ok: "Password diganti. Perangkat lain yang memakai akun ini sudah dikeluarkan.", savedAt: Date.now() };
 }
 
@@ -91,7 +100,9 @@ export async function confirmTotpSetup(_prev: ProfileState, formData: FormData):
 
 export async function disableTotp(_prev: ProfileState, formData: FormData): Promise<ProfileState> {
   const user = await requireUser();
-  if (!(await verify(await passwordOf(user.id), String(formData.get("password") ?? "")))) return { error: "Password salah." };
+  // Akun Google tanpa password cukup membuktikan lewat kode authenticator.
+  const existing = await passwordOf(user.id);
+  if (existing && !(await verify(existing, String(formData.get("password") ?? "")))) return { error: "Password salah." };
   if (!(await verifyUserTotp(user.id, String(formData.get("code") ?? "")))) return { error: "Kode authenticator salah." };
 
   await db.update(users).set({ totpSecret: null, totpPending: null, totpLastStep: null }).where(eq(users.id, user.id));

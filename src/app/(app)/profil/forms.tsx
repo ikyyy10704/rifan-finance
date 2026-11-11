@@ -128,19 +128,23 @@ export function ProfileForm({ me, p = "", bare }: { me: Me } & Variant) {
   );
 }
 
-export function PasswordForm({ p = "", bare }: Variant) {
+export function PasswordForm({ p = "", bare, hasPassword = true }: Variant & { hasPassword?: boolean }) {
   const [state, action, pending] = useActionState<ProfileState, FormData>(changePassword, {});
   const key = useResetOnSave(state.savedAt);
   return (
-    <Frame bare={bare} titleId={`${p}pw-title`} title="Ganti password">
+    <Frame bare={bare} titleId={`${p}pw-title`} title={hasPassword ? "Ganti password" : "Buat password"}>
       <form key={key} onSubmit={keepFormSubmit(action)} className="flex flex-col gap-3">
         <Messages state={state} />
-        <div>
-          <label htmlFor={`${p}pw-current`} className={fieldLabel}>
-            Password saat ini
-          </label>
-          <input id={`${p}pw-current`} name="current" type="password" required autoComplete="current-password" className={fieldInput} />
-        </div>
+        {hasPassword ? (
+          <div>
+            <label htmlFor={`${p}pw-current`} className={fieldLabel}>
+              Password saat ini
+            </label>
+            <input id={`${p}pw-current`} name="current" type="password" required autoComplete="current-password" className={fieldInput} />
+          </div>
+        ) : (
+          <p className="m-0 text-[13px] text-muted">Akun ini masuk lewat Google. Buat password bila ingin bisa masuk juga dengan username dan password.</p>
+        )}
         <div>
           <label htmlFor={`${p}pw-next`} className={fieldLabel}>
             Password baru
@@ -155,14 +159,14 @@ export function PasswordForm({ p = "", bare }: Variant) {
         </div>
         <small className="text-xs text-muted">Minimal 8 karakter. Perangkat lain yang memakai akun ini akan dikeluarkan.</small>
         <button type="submit" disabled={pending} className={darkButton}>
-          {pending ? "Menyimpan..." : "Ganti password"}
+          {pending ? "Menyimpan..." : hasPassword ? "Ganti password" : "Buat password"}
         </button>
       </form>
     </Frame>
   );
 }
 
-export function TwoFactor({ enabled, p = "", bare }: { enabled: boolean } & Variant) {
+export function TwoFactor({ enabled, p = "", bare, hasPassword = true }: { enabled: boolean; hasPassword?: boolean } & Variant) {
   const [setup, setSetup] = useState<TotpSetup | null>(null);
   const [starting, startSetup] = useTransition();
   const [confirmState, confirmAction, confirming] = useActionState<ProfileState, FormData>(confirmTotpSetup, {});
@@ -199,12 +203,14 @@ export function TwoFactor({ enabled, p = "", bare }: { enabled: boolean } & Vari
             <summary className="inline-flex min-h-11 items-center text-[13px] font-bold text-danger hover:underline">Matikan verifikasi dua langkah</summary>
             <form key={offKey} onSubmit={keepFormSubmit(offAction)} className="mt-2 flex flex-col gap-3 rounded-2xl bg-bg p-3.5">
               <Messages state={offState} />
-              <div>
-                <label htmlFor={`${p}tf-off-pw`} className={fieldLabel}>
-                  Password
-                </label>
-                <input id={`${p}tf-off-pw`} name="password" type="password" required autoComplete="current-password" className={fieldInput} />
-              </div>
+              {hasPassword && (
+                <div>
+                  <label htmlFor={`${p}tf-off-pw`} className={fieldLabel}>
+                    Password
+                  </label>
+                  <input id={`${p}tf-off-pw`} name="password" type="password" required autoComplete="current-password" className={fieldInput} />
+                </div>
+              )}
               <div>
                 <label htmlFor={`${p}tf-off-code`} className={fieldLabel}>
                   Kode dari aplikasi authenticator

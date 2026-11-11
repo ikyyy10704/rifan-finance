@@ -10,8 +10,9 @@ const input =
   "app:h-[46px] app:rounded-xl app:border-line app:bg-white app:px-3.5 app:text-ink app:hover:border-[#c9d3ce] app:focus:border-g700 app:focus-visible:outline-g700";
 import { login, type LoginState } from "@/lib/actions/auth";
 
-export function LoginForm() {
-  const [state, action, pending] = useActionState<LoginState, FormData>(login, {});
+/** `initial` dipakai saat kembali dari Google untuk akun ber-2FA: langsung ke tahap kode. */
+export function LoginForm({ initial = {} }: { initial?: LoginState }) {
+  const [state, action, pending] = useActionState<LoginState, FormData>(login, initial);
   const [showPassword, setShowPassword] = useState(false);
 
   const alert = state.error && (
