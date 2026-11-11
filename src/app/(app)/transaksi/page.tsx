@@ -60,26 +60,24 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
   const canNext = month < current;
   const activeAccounts = accounts.filter((a) => !a.archived || a.id === accountId);
 
-  const monthNav = (dark: boolean) => {
-    const btn = dark
-      ? "grid h-11 w-11 place-items-center rounded-xl bg-white/10 text-white hover:bg-white/20 active:scale-95"
-      : "grid h-11 w-11 place-items-center rounded-[10px] border border-line text-g800 hover:bg-bg";
-    return (
-      <nav aria-label="Pilih bulan" className="flex items-center justify-between gap-3">
-        <Link href={href({ bulan: shiftMonth(month, -1) })} aria-label="Bulan sebelumnya" className={btn}>
-          <Icon name="chevronLeft" />
+  // Desktop: pemilih bulan ringkas di samping tombol Catat Transaksi.
+  const monthNav = (
+    <nav aria-label="Pilih bulan" className="flex h-11 items-center rounded-xl border border-line bg-white">
+      <Link href={href({ bulan: shiftMonth(month, -1) })} aria-label="Bulan sebelumnya" className="grid h-full w-11 place-items-center rounded-l-xl text-g800 hover:bg-bg">
+        <Icon name="chevronLeft" />
+      </Link>
+      <b className="min-w-[132px] px-1 text-center text-[14px]">{monthLabel(month)}</b>
+      {canNext ? (
+        <Link href={href({ bulan: shiftMonth(month, 1) })} aria-label="Bulan berikutnya" className="grid h-full w-11 place-items-center rounded-r-xl text-g800 hover:bg-bg">
+          <Icon name="chevronRight" />
         </Link>
-        <b className="text-[15px]">{monthLabel(month)}</b>
-        {canNext ? (
-          <Link href={href({ bulan: shiftMonth(month, 1) })} aria-label="Bulan berikutnya" className={btn}>
-            <Icon name="chevronRight" />
-          </Link>
-        ) : (
-          <span className="h-11 w-11" aria-hidden="true" />
-        )}
-      </nav>
-    );
-  };
+      ) : (
+        <span aria-hidden="true" className="grid h-full w-11 place-items-center text-line">
+          <Icon name="chevronRight" />
+        </span>
+      )}
+    </nav>
+  );
 
   return (
     <>
@@ -167,61 +165,63 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
         </div>
       </div>
 
-      {/* ===== Desktop: judul + kartu filter (gaya .top dan .card mockup web) ===== */}
-      <header className="hidden flex-wrap items-center gap-4 px-8 pt-6 app:flex">
-        <div>
-          <h1 className="m-0 text-2xl tracking-[-0.4px]">Transaksi</h1>
-          <p className="mt-0.5 mb-0 text-muted">{monthLabel(month)}</p>
+      {/* ===== Desktop: judul + bulan + tombol catat dalam satu baris ===== */}
+      <header className="hidden items-center gap-4 px-8 pt-6 app:flex">
+        <div className="min-w-0">
+          <h1 className="m-0 text-2xl font-bold tracking-[-0.4px]">Transaksi</h1>
+          <p className="mt-0.5 mb-0 text-muted">Pemasukan, pengeluaran, dan transfer per bulan</p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          {monthNav}
           <RecordButton />
         </div>
       </header>
-      <div className="hidden px-8 pt-6 app:block">
-        <section aria-label="Bulan, filter, dan ringkasan" className="grid gap-6 rounded-[20px] border border-line bg-white p-[22px] wide:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <div className="flex flex-col gap-4">
-            {monthNav(false)}
-            <form action="/transaksi" role="search" className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-3">
-              {month !== current && <input type="hidden" name="bulan" value={month} />}
-              <div className="min-w-0">
-                <label htmlFor="cari" className={fieldLabel}>
-                  Cari catatan atau kategori
-                </label>
-                <input id="cari" name="cari" type="search" defaultValue={q} placeholder="Contoh: makan siang" className={fieldInput} />
-              </div>
-              <div className="min-w-0">
-                <label htmlFor="akun" className={fieldLabel}>
-                  Akun
-                </label>
-                <select id="akun" name="akun" defaultValue={accountId ?? ""} className={fieldInput}>
-                  <option value="">Semua akun</option>
-                  {accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                      {a.archived ? " (arsip)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button type="submit" className={`${darkButton} h-[46px]`}>
-                Terapkan
-              </button>
-            </form>
-            {filtered && (
-              <Link href={href({ akun: null, cari: "" })} className="self-start text-[13px] font-bold text-g700 hover:underline">
-                Hapus filter
-              </Link>
-            )}
-            <dl className="m-0 grid grid-cols-3 gap-2.5">
-              <Stat label="Pemasukan" value={rupiah(income)} plus />
-              <Stat label="Pengeluaran" value={rupiah(expense)} />
-              <Stat label="Selisih" value={rupiah(net)} />
-            </dl>
-          </div>
-          <div className="self-end">
-            <DailyChart month={month} values={daily} today={today} />
+
+      <div className="hidden flex-col gap-4 px-8 pt-6 app:flex">
+        {/* Tiga angka di kiri (bertumpuk di layar lebar), grafik harian di kanan dengan tinggi yang sama. */}
+        <section aria-label={`Ringkasan ${monthLabel(month)}`} className="grid gap-4 wide:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+          <dl className="m-0 grid grid-cols-3 gap-3 wide:grid-cols-1">
+            <Stat label="Pemasukan" value={rupiah(income)} tone="text-plus" />
+            <Stat label="Pengeluaran" value={rupiah(expense)} />
+            <Stat label="Selisih" value={rupiah(net)} tone={net < 0 ? "text-danger" : "text-ink"} />
+          </dl>
+          <div className="rounded-[20px] border border-line bg-white p-5">
+            <DailyChart month={month} values={daily} today={today} tall />
           </div>
         </section>
+
+        {/* Filter tepat di atas daftar yang disaringnya. */}
+        <form action="/transaksi" role="search" className="flex flex-wrap items-end gap-3 rounded-[20px] border border-line bg-white px-5 py-4">
+          {month !== current && <input type="hidden" name="bulan" value={month} />}
+          <div className="min-w-[220px] flex-[2]">
+            <label htmlFor="cari" className={fieldLabel}>
+              Cari catatan atau kategori
+            </label>
+            <input id="cari" name="cari" type="search" defaultValue={q} placeholder="Contoh: makan siang" className={fieldInput} />
+          </div>
+          <div className="min-w-[180px] flex-1">
+            <label htmlFor="akun" className={fieldLabel}>
+              Akun
+            </label>
+            <select id="akun" name="akun" defaultValue={accountId ?? ""} className={fieldInput}>
+              <option value="">Semua akun</option>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                  {a.archived ? " (arsip)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" className={`${darkButton} h-[46px] px-5`}>
+            Terapkan
+          </button>
+          {filtered && (
+            <Link href={href({ akun: null, cari: "" })} className="inline-flex h-[46px] items-center rounded-xl px-3 text-[13px] font-bold text-g700 hover:bg-bg">
+              Hapus filter
+            </Link>
+          )}
+        </form>
       </div>
 
       {/* ===== Daftar per tanggal: judul di luar, isi di kotak putih (daftar bergrup gaya aplikasi) ===== */}
@@ -230,7 +230,14 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
           <div className="rounded-[18px] bg-white px-4 py-6 text-center app:border app:border-line">
             <p className="m-0 font-semibold">{filtered ? "Tidak ada yang cocok" : `Belum ada transaksi di ${monthLabel(month)}`}</p>
             <p className="mt-1 mb-0 text-[13px] text-muted">
-              {filtered ? "Coba kata lain atau pilih Semua akun." : "Tekan tombol + di bawah untuk mencatat transaksi pertama."}
+              {filtered ? (
+                "Coba kata lain atau pilih Semua akun."
+              ) : (
+                <>
+                  <span className="app:hidden">Tekan tombol + di bawah untuk mencatat transaksi pertama.</span>
+                  <span className="hidden app:inline">Tekan Catat Transaksi di kanan atas untuk mencatat transaksi pertama.</span>
+                </>
+              )}
             </p>
           </div>
         ) : (
@@ -270,13 +277,11 @@ const monthShortLabel = (m: string) => {
   return new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString("id-ID", { month: "short", year: "numeric", timeZone: "UTC" });
 };
 
-function Stat({ label, value, dark = false, plus = false }: { label: string; value: string; dark?: boolean; plus?: boolean }) {
+function Stat({ label, value, tone = "text-ink" }: { label: string; value: string; tone?: string }) {
   return (
-    <div className={`min-w-0 rounded-[14px] p-2.5 ${dark ? "bg-white/10" : "bg-bg px-3"}`}>
-      <dt className={`text-[11.5px] ${dark ? "text-[#B9D3CA]" : "text-xs text-muted"}`}>{label}</dt>
-      <dd className={`m-0 truncate text-[13.5px] font-bold tabular-nums ${dark ? "text-white" : plus ? "text-plus" : "text-ink"} ${dark ? "" : "text-[15px]"}`}>
-        {value}
-      </dd>
+    <div className="min-w-0 rounded-[18px] border border-line bg-white px-4 py-3">
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className={`m-0 mt-0.5 truncate text-[20px] font-extrabold tracking-[-0.3px] tabular-nums ${tone}`}>{value}</dd>
     </div>
   );
 }

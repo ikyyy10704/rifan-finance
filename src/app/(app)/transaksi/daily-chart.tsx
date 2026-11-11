@@ -9,11 +9,13 @@ export function DailyChart({
   values,
   today,
   dark = false,
+  tall = false,
 }: {
   month: string; // YYYY-MM
   values: number[]; // index 0 = tanggal 1
   today: number | null; // tanggal hari ini bila bulan berjalan
   dark?: boolean;
+  tall?: boolean; // desktop: grafik mengisi kartunya sendiri, kosongnya pun setinggi grafik
 }) {
   const days = values.length;
   const max = Math.max(...values);
@@ -29,7 +31,20 @@ export function DailyChart({
   const empty = dark ? "rgba(255,255,255,0.14)" : "#EAF0EC";
   const sub = dark ? "text-[#B9D3CA]" : "text-muted";
 
-  // Tanpa pengeluaran: satu baris teks, bukan area grafik kosong yang tinggi.
+  // Tanpa pengeluaran. HP: satu baris teks. Desktop: area setinggi grafik supaya kartu di sebelahnya tetap sejajar.
+  if (max === 0 && tall) {
+    return (
+      <div className="flex h-full flex-col">
+        <p className={`m-0 text-xs ${sub}`}>Pengeluaran harian</p>
+        <div className="grid min-h-[120px] flex-1 place-items-center text-center">
+          <div>
+            <p className="m-0 text-sm font-semibold text-ink">Belum ada pengeluaran bulan ini</p>
+            <p className={`mt-1 mb-0 text-xs ${sub}`}>Batang per tanggal muncul setelah pengeluaran pertama dicatat.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (max === 0) {
     return (
       <p className={`m-0 flex items-baseline justify-between gap-2 text-xs ${sub}`}>
