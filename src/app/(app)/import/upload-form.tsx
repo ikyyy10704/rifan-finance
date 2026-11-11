@@ -44,9 +44,10 @@ export function UploadForm({ accounts }: { accounts: BriAccount[] }) {
         <span className={fieldLabel}>File e-Statement BRImo</span>
         <label
           htmlFor="imp-file"
-          className="flex min-h-[88px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#b9c6c0] bg-bg px-4 py-4 text-center hover:border-g700 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-g700"
+          className="flex min-h-[88px] min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[#b9c6c0] bg-bg px-4 py-4 text-center hover:border-g700 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-g700"
         >
-          <b className="text-sm text-g800">{fileName || "Pilih file CSV atau PDF"}</b>
+          {/* Nama file e-Statement panjang tanpa spasi: boleh dipatah di mana saja supaya tidak melebarkan halaman. */}
+          <b className="max-w-full text-sm break-all text-g800">{fileName || "Pilih file CSV atau PDF"}</b>
           <small className="text-xs text-muted">{fileName ? "Tekan untuk mengganti file" : "Unduh dari BRImo: Mutasi Rekening, lalu e-Statement. Maksimal 5 MB."}</small>
           <input
             id="imp-file"

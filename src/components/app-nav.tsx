@@ -112,6 +112,9 @@ export function BottomNav() {
   };
 
   return (
+    <>
+    {/* Konten yang lewat di belakang menu bawah dibuat buram bergradasi, bukan tampil tajam. */}
+    <div aria-hidden="true" className="nav-fade pointer-events-none fixed inset-x-0 bottom-0 z-[19] h-[calc(118px+env(safe-area-inset-bottom))] app:hidden" />
     <nav
       aria-label="Navigasi bawah"
       className="on-dark fixed inset-x-3 bottom-[calc(14px+env(safe-area-inset-bottom))] z-20 flex h-[72px] items-center justify-around rounded-[26px] bg-g900 px-1.5 app:hidden"
@@ -129,5 +132,6 @@ export function BottomNav() {
       {link(items[2])}
       {link(items[3])}
     </nav>
+    </>
   );
 }

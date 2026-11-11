@@ -31,6 +31,13 @@
 }
 
 @layer base {
+  /* Rasa aplikasi HP: halaman tidak pernah bisa digeser ke kanan/kiri. `clip` (bukan hidden)
+     supaya header sticky tetap menempel. */
+  html,
+  body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
   body {
     background: var(--color-bg);
     color: var(--color-ink);
@@ -75,6 +82,15 @@
 .rf-fade-late { animation: rf-fade 420ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both; }
 
 /* Sheet catat transaksi: naik dari bawah seperti .sheet di mockup mobile (0,25 detik). */
+/* Lapisan di belakang menu bawah HP: blur yang memudar ke atas. Mask membuat tepi blurnya tidak bergaris. */
+.nav-fade {
+  background: linear-gradient(to top, rgb(242 245 241 / 0.92) 30%, rgb(242 245 241 / 0));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(to top, #000 45%, transparent);
+  mask-image: linear-gradient(to top, #000 45%, transparent);
+}
+
 .rf-sheet {
   margin: auto auto 0;
   width: 100%;
@@ -90,7 +106,16 @@
 .rf-sheet[open] { animation: rf-sheet-up 250ms ease-out; }
 .rf-sheet::backdrop { background: rgb(7 59 46 / 0.45); }
 @media (min-width: 51.25rem) {
-  .rf-sheet { margin: auto; max-width: 460px; border-radius: 28px; }
+  /* Lapisan di belakang menu bawah HP: blur yang memudar ke atas. Mask membuat tepi blurnya tidak bergaris. */
+.nav-fade {
+  background: linear-gradient(to top, rgb(242 245 241 / 0.92) 30%, rgb(242 245 241 / 0));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(to top, #000 45%, transparent);
+  mask-image: linear-gradient(to top, #000 45%, transparent);
+}
+
+.rf-sheet { margin: auto; max-width: 460px; border-radius: 28px; }
 }
 @keyframes rf-sheet-up {
   from { transform: translateY(40px); opacity: 0; }

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "./icons";
@@ -24,20 +23,18 @@ export function PageHeader({
 }) {
   return (
     <>
+      {/* Tiga kolom: kiri (kembali) dan kanan (aksi) sama lebar, jadi judul selalu tepat di tengah. */}
       <header className="sticky top-0 z-10 bg-bg/90 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-2 backdrop-blur-md app:hidden">
-        <div className="flex min-h-11 items-center gap-2.5">
-          {back ? (
-            <Link href={back.href} aria-label={`Kembali ke ${back.label}`} className="-ml-2 grid h-11 w-11 flex-none place-items-center rounded-xl text-g800 active:bg-white">
-              <Icon name="chevronLeft" />
-            </Link>
-          ) : (
-            /* Logo di HP (sidebar berlogo hanya ada di desktop); menuju Beranda. */
-            <Link href="/dashboard" aria-label="Beranda Rifan Finance" className="flex-none">
-              <Image src="/icons/icon-192.png" alt="" width={34} height={34} className="rounded-[10px]" />
-            </Link>
-          )}
-          <h1 className="m-0 min-w-0 truncate text-[22px] font-extrabold tracking-[-0.5px]">{mobileTitle ?? title}</h1>
-          {mobileAction && <div className="ml-auto flex items-center gap-2">{mobileAction}</div>}
+        <div className="grid min-h-11 grid-cols-[minmax(44px,1fr)_minmax(0,auto)_minmax(44px,1fr)] items-center gap-2">
+          <div className="flex items-center">
+            {back && (
+              <Link href={back.href} aria-label={`Kembali ke ${back.label}`} className="-ml-2 grid h-11 w-11 place-items-center rounded-xl text-g800 active:bg-white">
+                <Icon name="chevronLeft" />
+              </Link>
+            )}
+          </div>
+          <h1 className="m-0 min-w-0 truncate text-center text-[19px] font-extrabold tracking-[-0.4px]">{mobileTitle ?? title}</h1>
+          <div className="flex items-center justify-end gap-2">{mobileAction}</div>
         </div>
       </header>
       <header className="hidden px-8 pt-6 app:block">

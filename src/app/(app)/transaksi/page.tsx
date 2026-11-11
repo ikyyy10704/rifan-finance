@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Icon } from "@/components/icons";
@@ -81,27 +80,22 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
 
   return (
     <>
-      {/* ===== HP: bilah judul ringkas dengan bulan di kanan ===== */}
-      <header className="sticky top-0 z-10 bg-bg/90 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-2 backdrop-blur-md app:hidden">
-        <div className="flex min-h-11 items-center gap-2">
-          <Link href="/dashboard" aria-label="Beranda Rifan Finance" className="flex-none">
-            <Image src="/icons/icon-192.png" alt="" width={34} height={34} className="rounded-[10px]" />
+      {/* ===== HP: judul di tengah tanpa logo, pemilih bulan di baris bawahnya ===== */}
+      <header className="sticky top-0 z-10 bg-bg/90 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-1 backdrop-blur-md app:hidden">
+        <h1 className="m-0 flex min-h-11 items-center justify-center text-[19px] font-extrabold tracking-[-0.4px]">Transaksi</h1>
+        <nav aria-label="Pilih bulan" className="flex items-center justify-center">
+          <Link href={href({ bulan: shiftMonth(month, -1) })} aria-label="Bulan sebelumnya" className="grid h-11 w-11 place-items-center rounded-xl text-g800 active:bg-white">
+            <Icon name="chevronLeft" />
           </Link>
-          <h1 className="m-0 text-[22px] font-extrabold tracking-[-0.5px]">Transaksi</h1>
-          <nav aria-label="Pilih bulan" className="ml-auto flex items-center">
-            <Link href={href({ bulan: shiftMonth(month, -1) })} aria-label="Bulan sebelumnya" className="grid h-11 w-10 place-items-center rounded-xl text-g800 active:bg-white">
-              <Icon name="chevronLeft" />
+          <b className="min-w-[128px] text-center text-[14px]">{monthLabel(month)}</b>
+          {canNext ? (
+            <Link href={href({ bulan: shiftMonth(month, 1) })} aria-label="Bulan berikutnya" className="grid h-11 w-11 place-items-center rounded-xl text-g800 active:bg-white">
+              <Icon name="chevronRight" />
             </Link>
-            <b className="min-w-[72px] text-center text-[14px]">{monthShortLabel(month)}</b>
-            {canNext ? (
-              <Link href={href({ bulan: shiftMonth(month, 1) })} aria-label="Bulan berikutnya" className="grid h-11 w-10 place-items-center rounded-xl text-g800 active:bg-white">
-                <Icon name="chevronRight" />
-              </Link>
-            ) : (
-              <span className="h-11 w-10" aria-hidden="true" />
-            )}
-          </nav>
-        </div>
+          ) : (
+            <span className="h-11 w-11" aria-hidden="true" />
+          )}
+        </nav>
       </header>
 
       <div className="px-4 pt-1 app:hidden">
@@ -282,11 +276,6 @@ function PlainStat({ label, value, tone = "text-ink" }: { label: string; value: 
     </div>
   );
 }
-
-const monthShortLabel = (m: string) => {
-  const [y, mo] = m.split("-").map(Number);
-  return new Date(Date.UTC(y, mo - 1, 1)).toLocaleDateString("id-ID", { month: "short", year: "numeric", timeZone: "UTC" });
-};
 
 function Stat({ label, value, tone = "text-ink" }: { label: string; value: string; tone?: string }) {
   return (
