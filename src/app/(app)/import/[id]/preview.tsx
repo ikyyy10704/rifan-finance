@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { errorBox, okBox } from "@/components/ui";
-import { commitImportRows, discardImportDrafts, updateImportRow } from "@/lib/actions/import";
+import { commitImportRows, discardImportDrafts, undoImport, updateImportRow } from "@/lib/actions/import";
 import type { ImportRow } from "@/lib/data/imports";
 import { rupiah, shortDate } from "@/lib/format";
 
@@ -28,11 +28,20 @@ export function ImportPreview({
 }) {
   const [rows, setRows] = useState(initial);
   const drafts = rows.filter((r) => r.status === "draft");
-  const [selected, setSelected] = useState<Set<number>>(() => new Set(drafts.map((r) => r.id)));
+  // Baris yang mungkin sudah dicatat manual tidak dicentang dulu: pengguna yang memutuskan.
+  const [selected, setSelected] = useState<Set<number>>(() => new Set(drafts.filter((r) => !r.maybeManual).map((r) => r.id)));
   const [saveState, setSaveState] = useState<Record<number, "saving" | "saved" | string>>({});
   const [showDone, setShowDone] = useState(false);
   const [committing, startCommit] = useTransition();
   const [result, setResult] = useState<{ ok?: string; error?: string }>({});
+  // Tombol Batalkan sesaat setelah memasukkan: hanya untuk baris yang baru saja masuk, hilang setelah 20 detik.
+  const [undo, setUndo] = useState<number[] | null>(null);
+  const [undoing, startUndo] = useTransition();
+  useEffect(() => {
+    if (!undo) return;
+    const t = setTimeout(() => setUndo(null), 20000);
+    return () => clearTimeout(t);
+  }, [undo]);
 
   // Data dari server berubah setelah commit: ambil ulang status baris tanpa menimpa pilihan yang masih draft.
   const [seen, setSeen] = useState(initial);
@@ -70,9 +79,25 @@ export function ImportPreview({
   return (
     <div className="flex flex-col gap-3">
       {result.ok && (
-        <p role="status" className={`${okBox} m-0`}>
-          {result.ok}
-        </p>
+        <div role="status" className={`${okBox} m-0 flex flex-wrap items-center justify-between gap-x-3 gap-y-1`}>
+          <span className="min-w-0 flex-1">{result.ok}</span>
+          {undo && (
+            <button
+              type="button"
+              disabled={undoing}
+              onClick={() =>
+                startUndo(async () => {
+                  const res = await undoImport(batchId, undo);
+                  setUndo(null);
+                  setResult(res.error ? { error: res.error } : { ok: `${res.removed} transaksi dibatalkan dan kembali menjadi draft.` });
+                })
+              }
+              className="inline-flex min-h-11 flex-none items-center rounded-lg px-3 font-extrabold text-g800 underline underline-offset-2 hover:bg-white/60"
+            >
+              {undoing ? "Membatalkan..." : "Batalkan"}
+            </button>
+          )}
+        </div>
       )}
       {result.error && (
         <p role="alert" className={`${errorBox} m-0`}>
@@ -141,6 +166,13 @@ export function ImportPreview({
                         {rupiah(r.amount)}
                       </b>
                     </div>
+
+                    {isDraft && r.maybeManual && (
+                      <p className="mt-1.5 mb-0 rounded-lg bg-[#FBF0DA] px-2.5 py-1.5 text-[12.5px] text-[#8A5E08]">
+                        <b>Mungkin sudah dicatat manual</b>
+                        {r.maybeManual.note ? `: "${r.maybeManual.note}"` : ""} di tanggal dan nominal yang sama. Tidak dicentang; centang bila memang berbeda.
+                      </p>
+                    )}
 
                     {isDraft ? (
                       <div className="mt-2 grid gap-2 app:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -238,9 +270,9 @@ export function ImportPreview({
                   batchId,
                   picked.map((r) => r.id),
                 );
-                if (res.error) setResult({ error: res.error });
-                else
-                  setResult({
+                if (res.error) return setResult({ error: res.error });
+                setUndo(res.rowIds?.length ? res.rowIds : null);
+                setResult({
                     ok: `${res.imported} transaksi dimasukkan ke ${accountName}.${res.skipped ? ` ${res.skipped} dilewati karena sudah ada.` : ""} Sisa baris tetap tersimpan sebagai draft.`,
                   });
               })

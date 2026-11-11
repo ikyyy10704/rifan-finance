@@ -15,6 +15,13 @@
       "when": 1794384293777,
       "tag": "0001_google_login",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794389746139,
+      "tag": "0002_import_cancel",
+      "breakpoints": true
     }
   ]
 }

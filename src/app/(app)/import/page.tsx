@@ -14,7 +14,11 @@ export const metadata: Metadata = { title: "Import Mutasi BRI" };
 export default function ImportPage() {
   return (
     <>
-      <PageHeader title="Import BRI" subtitle="Baca e-Statement BRImo (CSV atau PDF), cek dulu, lalu masukkan" />
+      <PageHeader
+        title="Import BRI"
+        subtitle="Baca e-Statement BRImo (CSV atau PDF), cek dulu, lalu masukkan"
+        back={{ href: "/transaksi", label: "Transaksi" }}
+      />
       <Suspense fallback={<p className="p-6 text-muted" role="status">Memuat...</p>}>
         <Content />
       </Suspense>
@@ -67,7 +71,9 @@ async function Content() {
                         {b.imported} masuk{b.duplicates ? ` · ${b.duplicates} sudah ada` : ""}
                       </small>
                     </span>
-                    {b.drafts > 0 ? (
+                    {b.canceledAt ? (
+                      <span className="rounded-md bg-bg px-2 py-1 text-xs font-bold whitespace-nowrap text-muted">Dibatalkan</span>
+                    ) : b.drafts > 0 ? (
                       <span className="rounded-md bg-[#FBF0DA] px-2 py-1 text-xs font-bold whitespace-nowrap text-[#8A5E08]">{b.drafts} draft</span>
                     ) : (
                       <span className="rounded-md bg-[#E3F4EC] px-2 py-1 text-xs font-bold whitespace-nowrap text-plus">Selesai</span>

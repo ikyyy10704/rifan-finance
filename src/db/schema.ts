@@ -183,6 +183,8 @@ export const importBatches = pgTable("import_batches", {
   periodTo: text("period_to"),
   openingBalance: rupiah("opening_balance"),
   closingBalance: rupiah("closing_balance"),
+  // Diisi saat pengguna menekan "Batalkan impor ini": transaksinya dihapus, riwayat file tetap ada.
+  canceledAt: text("canceled_at"),
   createdAt: text("created_at").notNull().default(nowText),
 });
 

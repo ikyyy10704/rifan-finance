@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Icon } from "@/components/icons";
 import { PageBody, PageHeader } from "@/components/page-header";
 import { card } from "@/components/ui";
 import { getAccounts, getCategories } from "@/lib/data/finance";
 import { getImportBatch } from "@/lib/data/imports";
 import { rupiah, shortDate } from "@/lib/format";
+import { CancelImport } from "./cancel-import";
 import { ImportPreview } from "./preview";
 
 export const metadata: Metadata = { title: "Preview impor" };
@@ -18,12 +17,8 @@ export default function PreviewPage({ params }: PageProps<"/import/[id]">) {
       <PageHeader
         title="Preview impor"
         subtitle="Cek setiap baris, ubah keterangan atau kategori, lalu masukkan yang sudah benar"
-        mobileAction={
-          <Link href="/import" className="inline-flex h-11 items-center gap-1 rounded-xl px-2 text-[13px] font-bold text-g700">
-            <Icon name="chevronLeft" className="h-[18px] w-[18px]" />
-            Import
-          </Link>
-        }
+        mobileTitle="Preview"
+        back={{ href: "/import", label: "Import BRI" }}
       />
       <Suspense fallback={<p className="p-6 text-muted" role="status">Memuat preview...</p>}>
         <Preview params={params} />
@@ -45,10 +40,14 @@ async function Preview({ params }: { params: PageProps<"/import/[id]">["params"]
     imported: batch.rows.filter((r) => r.status === "imported").length,
     duplicate: batch.rows.filter((r) => r.status === "duplicate").length,
   };
-  // Saldo akun bila semua draft dimasukkan, dibandingkan dengan saldo akhir menurut bank.
+  // Pencocokan saldo dilakukan pada tanggal akhir periode file, bukan hari ini, supaya transaksi
+  // sesudah periode itu tidak membuat selisih palsu.
+  const endLabel = batch.periodTo ? shortDate(batch.periodTo) : "akhir file";
+  const atEnd = batch.balanceAtEnd ?? account?.balance ?? 0;
   const pendingNet = drafts.reduce((s, r) => s + (r.direction === "credit" ? r.amount : -r.amount), 0);
-  const projected = (account?.balance ?? 0) + pendingNet;
+  const projected = atEnd + pendingNet;
   const diff = batch.closingBalance !== null ? projected - batch.closingBalance : null;
+  const importedRows = batch.rows.filter((r) => r.status === "imported");
 
   return (
     <PageBody>
@@ -90,20 +89,39 @@ async function Preview({ params }: { params: PageProps<"/import/[id]">["params"]
             <dd className="m-0 font-bold tabular-nums">{batch.closingBalance !== null ? rupiah(batch.closingBalance) : "-"}</dd>
           </div>
           <div className="rounded-[14px] bg-bg p-3">
-            <dt className="text-xs text-muted">Saldo di aplikasi sekarang</dt>
-            <dd className="m-0 font-bold tabular-nums">{rupiah(account?.balance ?? 0)}</dd>
+            <dt className="text-xs text-muted">Saldo aplikasi per {endLabel}</dt>
+            <dd className="m-0 font-bold tabular-nums">{rupiah(atEnd)}</dd>
           </div>
           <div className="rounded-[14px] bg-bg p-3">
             <dt className="text-xs text-muted">Bila semua draft dimasukkan</dt>
             <dd className="m-0 font-bold tabular-nums">{rupiah(projected)}</dd>
           </div>
         </dl>
-        {diff !== null && counts.draft > 0 && (
+        {batch.canceledAt && (
+          <p className="mt-2.5 mb-0 rounded-xl bg-bg px-3 py-2 text-[13px] text-muted">
+            <b className="text-ink">Impor ini dibatalkan.</b> Transaksinya sudah dihapus dan barisnya kembali menjadi draft. Masukkan lagi bila memang benar, atau hapus draftnya.
+          </p>
+        )}
+        {diff !== null && (
           <p className={`mt-2.5 mb-0 rounded-xl px-3 py-2 text-[13px] ${diff === 0 ? "bg-[#E3F4EC] text-plus" : "bg-[#FBF0DA] text-[#8A5E08]"}`}>
             {diff === 0
-              ? "Cocok: bila semua draft dimasukkan, saldo aplikasi sama dengan saldo akhir di bank."
-              : `Selisih ${rupiah(Math.abs(diff))} dengan saldo akhir bank. Biasanya karena saldo awal akun belum diisi sesuai saldo sebelum ${batch.periodFrom ? shortDate(batch.periodFrom) : "periode ini"}, atau ada transaksi yang sudah dicatat manual.`}
+              ? counts.draft > 0
+                ? `Cocok: bila semua draft dimasukkan, saldo aplikasi per ${endLabel} sama dengan saldo akhir di bank.`
+                : `Cocok: saldo aplikasi per ${endLabel} sama dengan saldo akhir di bank.`
+              : counts.draft > 0
+                ? `Bila semua draft dimasukkan, saldo aplikasi per ${endLabel} ${diff > 0 ? "lebih" : "kurang"} ${rupiah(Math.abs(diff))} dari saldo akhir bank. Biasanya karena saldo awal akun belum sesuai, atau ada transaksi yang sudah dicatat manual.`
+                : `Saldo aplikasi per ${endLabel} ${diff > 0 ? "lebih" : "kurang"} ${rupiah(Math.abs(diff))} dari saldo akhir bank. ${diff > 0 ? "Kemungkinan ada pemasukan tercatat dua kali, atau pengeluaran yang terlewat." : "Kemungkinan ada pengeluaran tercatat dua kali (manual dan impor), atau pemasukan yang terlewat."} Cek di halaman Transaksi.`}
           </p>
+        )}
+        {importedRows.length > 0 && (
+          <div className="mt-3 flex justify-end border-t border-line pt-2">
+            <CancelImport
+              batchId={batch.id}
+              count={importedRows.length}
+              incoming={importedRows.filter((r) => r.direction === "credit").reduce((s, r) => s + r.amount, 0)}
+              outgoing={importedRows.filter((r) => r.direction === "debit").reduce((s, r) => s + r.amount, 0)}
+            />
+          </div>
         )}
       </section>
 
