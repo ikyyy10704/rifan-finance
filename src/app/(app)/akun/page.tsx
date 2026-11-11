@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
-import { Icon } from "@/components/icons";
 import { PageHeader } from "@/components/page-header";
 import { ProviderLogo } from "@/components/provider-logo";
 import { card } from "@/components/ui";
@@ -9,7 +7,7 @@ import { toggleArchiveAccount } from "@/lib/actions/accounts";
 import { getAccounts } from "@/lib/data/finance";
 import { ACCOUNT_TYPE_LABEL, rupiah } from "@/lib/format";
 import { findProvider, formatAccountNumber } from "@/lib/providers";
-import { AccountForm, AddAccountSheet } from "./account-form";
+import { AddAccountSheet } from "./account-form";
 
 export const metadata: Metadata = { title: "Akun & Dompet" };
 
@@ -22,21 +20,8 @@ export default function AkunPage() {
         title="Akun & Dompet"
         mobileTitle="Akun"
         subtitle="Tunai, rekening bank, dan e-wallet"
-        mobileAction={
-          <>
-            {/* Jalan masuk Import BRI di HP, di samping Tambah. */}
-            {/* Ikon saja supaya judul "Akun & Dompet" tidak terpotong di layar sempit. */}
-            <Link
-              href="/import"
-              aria-label="Import mutasi BRI"
-              title="Import mutasi BRI"
-              className="grid h-11 w-11 flex-none place-items-center rounded-xl border border-line bg-white text-g800 active:translate-y-px"
-            >
-              <Icon name="income" />
-            </Link>
-            <AddAccountSheet />
-          </>
-        }
+        action={<AddAccountSheet desktop />}
+        mobileAction={<AddAccountSheet />}
       />
       <Suspense fallback={<p className="p-6 text-muted" role="status">Memuat akun...</p>}>
         <Accounts />
@@ -83,47 +68,48 @@ async function Accounts() {
         )}
       </div>
 
-      {/* ===== Desktop: daftar + form berdampingan (tidak berubah) ===== */}
-      <div className="hidden flex-col gap-6 px-8 pt-6 pb-12 app:flex">
-        <div className="grid gap-6 wide:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] wide:items-start">
-          <section aria-labelledby="list-title" className={card}>
-            <div className="mb-3 flex items-baseline justify-between gap-3">
-              <h2 id="list-title" className="m-0 text-base">
-                Akun aktif
+      {/* ===== Desktop: satu kartu daftar. Form tambah dibuka dari tombol di kanan atas. ===== */}
+      <div className="hidden px-8 pt-6 pb-12 app:block">
+        <section aria-labelledby="list-title" className={`${card} max-w-[880px]`}>
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 border-b border-line pb-4">
+            <div>
+              <h2 id="list-title" className="m-0 text-[13px] font-semibold text-muted">
+                Total saldo
               </h2>
-              {active.length > 0 && (
-                <span className="text-[13px] text-muted">
-                  Total <b className="text-ink">{rupiah(total)}</b>
-                </span>
-              )}
+              <p className="m-0 text-[30px] leading-tight font-extrabold tracking-[-0.8px] tabular-nums">{rupiah(total)}</p>
             </div>
-            {active.length === 0 ? (
-              <p className="m-0 text-muted">Belum ada akun. Isi form di samping untuk menambahkan akun pertama.</p>
-            ) : (
-              <ul className="m-0 list-none p-0">
-                {active.map((a, i) => (
-                  <DesktopRow key={a.id} account={a} first={i === 0} />
-                ))}
-              </ul>
-            )}
-          </section>
+            <p className="m-0 pb-1 text-[13px] text-muted">
+              {active.length} akun aktif{archived.length > 0 && `, ${archived.length} diarsipkan`}
+            </p>
+          </div>
 
-          <AccountForm />
+          {active.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="m-0 font-semibold">Belum ada akun</p>
+              <p className="mt-1 mb-0 text-[13px] text-muted">Tekan Tambah akun di kanan atas untuk menambahkan BRI, DANA, GoPay, ShopeePay, atau Tunai.</p>
+            </div>
+          ) : (
+            <ul className="m-0 list-none p-0">
+              {active.map((a, i) => (
+                <DesktopRow key={a.id} account={a} first={i === 0} />
+              ))}
+            </ul>
+          )}
 
           {archived.length > 0 && (
-            <section aria-labelledby="arch-title" className={`${card} wide:col-start-1`}>
-              <h2 id="arch-title" className="m-0 mb-1 text-base">
-                Diarsipkan
-              </h2>
-              <p className="mt-0 mb-2 text-[13px] text-muted">Tidak dihitung di total saldo dan tidak muncul saat mencatat transaksi. Riwayatnya tetap tersimpan.</p>
+            <details className="mt-2 border-t border-line pt-2">
+              <summary className="inline-flex min-h-11 items-center text-[13px] font-bold text-g700 hover:underline">
+                Diarsipkan ({archived.length})
+              </summary>
+              <p className="mt-0 mb-1 text-[13px] text-muted">Tidak dihitung di total saldo dan tidak muncul saat mencatat transaksi. Riwayatnya tetap tersimpan.</p>
               <ul className="m-0 list-none p-0">
                 {archived.map((a, i) => (
                   <DesktopRow key={a.id} account={a} first={i === 0} />
                 ))}
               </ul>
-            </section>
+            </details>
           )}
-        </div>
+        </section>
       </div>
     </>
   );
@@ -166,7 +152,7 @@ function MobileRow({ a, first }: { a: Account; first: boolean }) {
 function DesktopRow({ account: a, first }: { account: Account; first: boolean }) {
   const provider = findProvider(a.provider);
   return (
-    <li className={`flex items-start gap-3 py-3 ${first ? "" : "border-t border-line"}`}>
+    <li className={`flex items-center gap-4 py-3.5 ${first ? "" : "border-t border-line"}`}>
       <ProviderLogo provider={a.provider} type={a.type} />
       <div className="min-w-0 flex-1">
         <b className="block truncate">{a.name}</b>

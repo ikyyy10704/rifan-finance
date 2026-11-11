@@ -3,10 +3,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Icon } from "@/components/icons";
 import { PageBody, PageHeader } from "@/components/page-header";
-import { card } from "@/components/ui";
+import { secondaryButton } from "@/components/ui";
 import { getNotificationPage } from "@/lib/data/notifications";
 import { longDate, todayJakarta } from "@/lib/format";
-import { AlertPrefs, MarkRead, PushToggle } from "./settings";
+import { MarkRead } from "./settings";
 
 export const metadata: Metadata = { title: "Notifikasi" };
 
@@ -19,7 +19,26 @@ const LEVEL = {
 export default function NotifikasiPage() {
   return (
     <>
-      <PageHeader title="Notifikasi" subtitle="Peringatan keuangan harian, dikirim pukul 07.00 WIB" />
+      <PageHeader
+        title="Notifikasi"
+        subtitle="Peringatan keuangan harian, dikirim pukul 07.00 WIB"
+        action={
+          <Link href="/notifikasi/pengaturan" className={`${secondaryButton} gap-2`}>
+            <Icon name="settings" className="h-[18px] w-[18px]" />
+            Pengaturan
+          </Link>
+        }
+        mobileAction={
+          <Link
+            href="/notifikasi/pengaturan"
+            aria-label="Pengaturan notifikasi"
+            title="Pengaturan notifikasi"
+            className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-white text-g800 active:translate-y-px"
+          >
+            <Icon name="settings" />
+          </Link>
+        }
+      />
       <Suspense fallback={<p className="p-6 text-muted" role="status">Memuat notifikasi...</p>}>
         <Content />
       </Suspense>
@@ -28,7 +47,7 @@ export default function NotifikasiPage() {
 }
 
 async function Content() {
-  const { list, prefs, devices, vapidPublicKey } = await getNotificationPage();
+  const { list } = await getNotificationPage();
   const unread = list.filter((n) => !n.readAt).length;
   const today = todayJakarta();
   const byDay = new Map<string, typeof list>();
@@ -45,12 +64,19 @@ async function Content() {
   return (
     <PageBody>
       <MarkRead unread={unread} />
-      <div className="grid gap-3.5 app:gap-6 wide:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] wide:items-start">
+      {/* Satu kolom yang tidak terlalu lebar: daftar notifikasi lebih mudah dibaca. */}
+      <div className="w-full max-w-[760px]">
         <div className="flex flex-col gap-4">
           {list.length === 0 ? (
             <div className="rounded-[18px] bg-white px-4 py-6 text-center app:border app:border-line">
               <p className="m-0 font-semibold">Tidak ada peringatan</p>
-              <p className="mt-1 mb-0 text-[13px] text-muted">Keuangan Anda tidak memicu peringatan apa pun hari ini.</p>
+              <p className="mt-1 mb-0 text-[13px] text-muted">
+                Keuangan Anda tidak memicu peringatan apa pun hari ini. Pilih peringatan yang dikirim di{" "}
+                <Link href="/notifikasi/pengaturan" className="font-bold text-g700 underline-offset-2 hover:underline">
+                  Pengaturan
+                </Link>
+                .
+              </p>
             </div>
           ) : (
             [...byDay].map(([day, items]) => (
@@ -85,21 +111,6 @@ async function Content() {
               </section>
             ))
           )}
-        </div>
-
-        <div className="flex flex-col gap-3.5 app:gap-6">
-          <section aria-labelledby="push-title" className={card}>
-            <h2 id="push-title" className="m-0 mb-3 text-[15px] app:text-base">
-              Kirim ke HP
-            </h2>
-            <PushToggle vapidPublicKey={vapidPublicKey} devices={devices} />
-          </section>
-          <section aria-labelledby="pref-title" className={card}>
-            <h2 id="pref-title" className="m-0 mb-3 text-[15px] app:text-base">
-              Pengaturan peringatan
-            </h2>
-            <AlertPrefs prefs={prefs} />
-          </section>
         </div>
       </div>
     </PageBody>

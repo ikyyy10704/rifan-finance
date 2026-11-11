@@ -16,6 +16,20 @@ export async function ensureTodayAlerts() {
   return unreadCount(db, user.id);
 }
 
+/** Halaman /notifikasi/pengaturan: pilihan peringatan dan status push, tanpa daftar notifikasi. */
+export async function getNotificationSettings() {
+  const user = await requireUser();
+  const [[u], devices] = await Promise.all([
+    db.select({ p: users.notifyPrefs }).from(users).where(eq(users.id, user.id)),
+    db.$count(pushSubscriptions, eq(pushSubscriptions.userId, user.id)),
+  ]);
+  return {
+    prefs: parseNotifyPrefs(u?.p),
+    devices,
+    vapidPublicKey: pushReady() ? (process.env.VAPID_PUBLIC_KEY ?? null) : null,
+  };
+}
+
 export async function getNotificationPage() {
   const user = await requireUser();
   await generateAlerts(db, user.id);

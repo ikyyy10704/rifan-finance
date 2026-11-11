@@ -118,7 +118,9 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
 
         {/* Cari + chip akun */}
         <div className="mt-4">
-        <form action="/transaksi" role="search" className="relative">
+        {/* Cari + jalan masuk Import mutasi BRI (dipindah dari halaman Akun: hasil impor masuk ke daftar ini). */}
+        <div className="flex gap-2">
+        <form action="/transaksi" role="search" className="relative min-w-0 flex-1">
           {month !== current && <input type="hidden" name="bulan" value={month} />}
           {accountId && <input type="hidden" name="akun" value={accountId} />}
           <label htmlFor="cari-hp" className="sr-only">
@@ -140,6 +142,15 @@ async function Transaksi({ searchParams }: { searchParams: PageProps<"/transaksi
             Cari
           </button>
         </form>
+        <Link
+          href="/import"
+          aria-label="Import mutasi BRI"
+          className="inline-flex h-12 flex-none items-center gap-1.5 rounded-2xl border border-line bg-white px-3.5 text-[13px] font-bold text-g800 active:translate-y-px"
+        >
+          <Icon name="income" className="h-[18px] w-[18px]" />
+          Import
+        </Link>
+        </div>
         {activeAccounts.length > 0 && (
           <nav aria-label="Filter akun" className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
             <Chip href={href({ akun: null })} on={!accountId}>

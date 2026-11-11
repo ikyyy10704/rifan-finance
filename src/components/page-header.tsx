@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Icon } from "./icons";
 
 /**
  * HP: bilah judul ringkas yang menempel di atas (gaya aplikasi), tanpa blok hijau.
@@ -12,26 +13,40 @@ export function PageHeader({
   subtitle,
   action,
   mobileAction,
+  back,
 }: {
   title: string;
   mobileTitle?: string; // judul lebih pendek untuk bilah HP yang sempit
   subtitle?: ReactNode;
   action?: ReactNode; // desktop
   mobileAction?: ReactNode; // HP, di kanan judul
+  back?: { href: string; label: string }; // halaman turunan: tombol kembali menggantikan logo
 }) {
   return (
     <>
       <header className="sticky top-0 z-10 bg-bg/90 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-2 backdrop-blur-md app:hidden">
         <div className="flex min-h-11 items-center gap-2.5">
-          {/* Logo di HP (sidebar berlogo hanya ada di desktop); menuju Beranda. */}
-          <Link href="/dashboard" aria-label="Beranda Rifan Finance" className="flex-none">
-            <Image src="/icons/icon-192.png" alt="" width={34} height={34} className="rounded-[10px]" />
-          </Link>
+          {back ? (
+            <Link href={back.href} aria-label={`Kembali ke ${back.label}`} className="-ml-2 grid h-11 w-11 flex-none place-items-center rounded-xl text-g800 active:bg-white">
+              <Icon name="chevronLeft" />
+            </Link>
+          ) : (
+            /* Logo di HP (sidebar berlogo hanya ada di desktop); menuju Beranda. */
+            <Link href="/dashboard" aria-label="Beranda Rifan Finance" className="flex-none">
+              <Image src="/icons/icon-192.png" alt="" width={34} height={34} className="rounded-[10px]" />
+            </Link>
+          )}
           <h1 className="m-0 min-w-0 truncate text-[22px] font-extrabold tracking-[-0.5px]">{mobileTitle ?? title}</h1>
           {mobileAction && <div className="ml-auto flex items-center gap-2">{mobileAction}</div>}
         </div>
       </header>
       <header className="hidden px-8 pt-6 app:block">
+        {back && (
+          <Link href={back.href} className="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-[13px] font-bold text-g700 hover:bg-white">
+            <Icon name="chevronLeft" className="h-[18px] w-[18px]" />
+            {back.label}
+          </Link>
+        )}
         <div className="flex flex-wrap items-center gap-4">
           <div className="min-w-0">
             <h1 className="m-0 text-2xl font-bold tracking-[-0.4px]">{title}</h1>

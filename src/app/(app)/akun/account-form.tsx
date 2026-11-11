@@ -6,7 +6,7 @@ import { AmountInput } from "@/components/amount-input";
 import { Icon } from "@/components/icons";
 import { typeIcon } from "@/components/provider-logo";
 import { barButton, Sheet, useCloseSheet } from "@/components/sheet";
-import { card, errorBox, fieldInput, fieldLabel, okBox, primaryButton } from "@/components/ui";
+import { darkButton, errorBox, fieldInput, fieldLabel, okBox, primaryButton } from "@/components/ui";
 import { keepFormSubmit } from "@/components/use-keep-form";
 import { createAccount, type AccountFormState } from "@/lib/actions/accounts";
 import { findProvider, numberLabel, PROVIDERS, type ProviderId } from "@/lib/providers";
@@ -14,32 +14,23 @@ import { findProvider, numberLabel, PROVIDERS, type ProviderId } from "@/lib/pro
 // Nama awal yang diisikan saat penyedia dipilih; tetap bisa diubah (misalnya "BRI Tabungan").
 const DEFAULT_NAME: Partial<Record<ProviderId, string>> = { bri: "BRI", dana: "DANA", gopay: "GoPay", shopeepay: "ShopeePay", cash: "Tunai" };
 
-/** Desktop: kartu di samping daftar akun. */
-export function AccountForm() {
-  return (
-    <section aria-labelledby="add-title" className={card}>
-      <h2 id="add-title" className="m-0 mb-3 text-[15px] app:text-base">
-        Tambah akun
-      </h2>
-      <FormBody prefix="d" />
-    </section>
-  );
-}
-
-/** HP: tombol "Tambah" di bilah judul yang membuka sheet berisi form yang sama. */
-export function AddAccountSheet() {
+/**
+ * Tombol yang membuka form Tambah akun: sheet dari bawah di HP, dialog di tengah di desktop.
+ * Form tidak lagi tampil terus di samping daftar supaya halaman Akun tetap lega.
+ */
+export function AddAccountSheet({ desktop = false }: { desktop?: boolean }) {
   return (
     <Sheet
       title="Tambah akun"
-      buttonClassName={barButton}
+      buttonClassName={desktop ? `${darkButton} gap-2` : barButton}
       button={
         <>
           <Icon name="plus" className="h-[18px] w-[18px]" />
-          Tambah
+          {desktop ? "Tambah akun" : "Tambah"}
         </>
       }
     >
-      <FormBody prefix="m" closeOnSave />
+      <FormBody prefix={desktop ? "d" : "m"} closeOnSave />
     </Sheet>
   );
 }
@@ -91,7 +82,7 @@ function Fields({ prefix, onSubmit, pending }: { prefix: string; onSubmit: React
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
       <fieldset className="m-0 border-0 p-0">
         <legend className={fieldLabel}>Pilih akun</legend>
-        <div className="grid grid-cols-3 gap-2 wide:grid-cols-2 min-[1300px]:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2">
           {PROVIDERS.map((opt) => {
             const on = provider === opt.id;
             return (
