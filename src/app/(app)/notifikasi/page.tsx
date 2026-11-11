@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Icon } from "@/components/icons";
 import { PageBody, PageHeader } from "@/components/page-header";
-import { secondaryButton } from "@/components/ui";
 import { getNotificationPage } from "@/lib/data/notifications";
 import { longDate, todayJakarta } from "@/lib/format";
 import { MarkRead } from "./settings";
@@ -22,22 +21,8 @@ export default function NotifikasiPage() {
       <PageHeader
         title="Notifikasi"
         subtitle="Peringatan keuangan harian, dikirim pukul 07.00 WIB"
-        action={
-          <Link href="/notifikasi/pengaturan" className={`${secondaryButton} gap-2`}>
-            <Icon name="settings" className="h-[18px] w-[18px]" />
-            Pengaturan
-          </Link>
-        }
-        mobileAction={
-          <Link
-            href="/notifikasi/pengaturan"
-            aria-label="Pengaturan notifikasi"
-            title="Pengaturan notifikasi"
-            className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-white text-g800 active:translate-y-px"
-          >
-            <Icon name="settings" />
-          </Link>
-        }
+        action={<GearLink />}
+        mobileAction={<GearLink />}
       />
       <Suspense fallback={<p className="p-6 text-muted" role="status">Memuat notifikasi...</p>}>
         <Content />
@@ -64,8 +49,7 @@ async function Content() {
   return (
     <PageBody>
       <MarkRead unread={unread} />
-      {/* Satu kolom yang tidak terlalu lebar: daftar notifikasi lebih mudah dibaca. */}
-      <div className="w-full max-w-[760px]">
+      <div>
         <div className="flex flex-col gap-4">
           {list.length === 0 ? (
             <div className="rounded-[18px] bg-white px-4 py-6 text-center app:border app:border-line">
@@ -114,5 +98,19 @@ async function Content() {
         </div>
       </div>
     </PageBody>
+  );
+}
+
+/** Tombol bulat berisi roda gigi, tanpa teks; namanya dibacakan lewat aria-label dan muncul sebagai tooltip. */
+function GearLink() {
+  return (
+    <Link
+      href="/notifikasi/pengaturan"
+      aria-label="Pengaturan notifikasi"
+      title="Pengaturan notifikasi"
+      className="grid h-11 w-11 place-items-center rounded-full border-[1.5px] border-g800 bg-white text-g800 transition-colors hover:bg-g800 hover:text-white active:translate-y-px"
+    >
+      <Icon name="gear" className="h-[22px] w-[22px]" />
+    </Link>
   );
 }

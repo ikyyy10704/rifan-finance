@@ -28,7 +28,7 @@ async function Content() {
 
   return (
     <PageBody>
-      <div className="grid gap-3.5 app:gap-6 wide:grid-cols-2 wide:items-start">
+      <div className="grid gap-3.5 app:gap-6 wide:grid-cols-2">
         <section aria-labelledby="up-title" className={card}>
           <h2 id="up-title" className="m-0 mb-3 text-[15px] app:text-base">
             Unggah file mutasi

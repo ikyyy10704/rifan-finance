@@ -130,7 +130,7 @@ export function Hero({
       </div>
 
       <div className="relative z-10">
-        <div className="mt-[22px] mb-[18px] text-center app:m-0 app:text-left">
+        <div className="mt-[22px] mb-1 text-center app:m-0 app:text-left">
           <small className="text-sm font-medium text-lime app:text-[14px]">{label}</small>
           <div className="mt-1 flex items-center justify-center gap-2 app:mt-1.5 app:mb-5 app:justify-start app:gap-3">
             <strong className="text-[32px] font-extrabold tracking-[-0.8px] app:text-[38px] app:tracking-[-1px]" aria-live="polite">
@@ -139,7 +139,8 @@ export function Hero({
             {eye}
           </div>
         </div>
-        <div className="flex justify-center gap-3 app:justify-start">
+        {/* Desktop saja. Di HP sudah ada tombol + di menu bawah dan aksi cepat, jadi tidak diulang di sini. */}
+        <div className="hidden gap-3 app:flex">
           <button
             type="button"
             onClick={() => openSheet({ type: "expense" })}

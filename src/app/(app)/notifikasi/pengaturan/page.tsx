@@ -27,7 +27,8 @@ async function Settings() {
   const { prefs, devices, vapidPublicKey } = await getNotificationSettings();
   return (
     <PageBody>
-      <div className="flex w-full max-w-[640px] flex-col gap-3.5 app:gap-6">
+      {/* Dua kartu berdampingan dan sama tinggi di layar lebar, tanpa ruang kosong di kanan atau bawah. */}
+      <div className="grid gap-3.5 app:gap-6 wide:grid-cols-2">
         <section aria-labelledby="pref-title" className={card}>
           <h2 id="pref-title" className="m-0 mb-1 text-[15px] app:text-base">
             Peringatan harian

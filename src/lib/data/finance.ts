@@ -105,6 +105,21 @@ export async function getMonthTotals(month = thisMonth()) {
   return row ?? { income: 0, expense: 0 };
 }
 
+/** Pengeluaran per tanggal untuk satu bulan; indeks 0 = tanggal 1. Dipakai grafik laju pengeluaran. */
+export async function getDailyExpense(month: string) {
+  const user = await requireUser();
+  const rows = await all<{ day: number; total: number }>(db, sql`
+    SELECT CAST(substr(date, 9, 2) AS integer) AS day, SUM(amount) AS total
+    FROM transactions
+    WHERE user_id = ${user.id} AND type = 'expense' AND substr(date, 1, 7) = ${month}
+    GROUP BY day`);
+  const [y, m] = month.split("-").map(Number);
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const out = Array.from({ length: days }, () => 0);
+  for (const r of rows) out[Number(r.day) - 1] = Number(r.total);
+  return out;
+}
+
 /** Pemasukan dan pengeluaran per bulan, `count` bulan terakhir termasuk bulan ini. */
 export async function getCashflow(count = 6) {
   const user = await requireUser();

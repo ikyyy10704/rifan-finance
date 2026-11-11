@@ -70,7 +70,7 @@ async function Accounts() {
 
       {/* ===== Desktop: satu kartu daftar. Form tambah dibuka dari tombol di kanan atas. ===== */}
       <div className="hidden px-8 pt-6 pb-12 app:block">
-        <section aria-labelledby="list-title" className={`${card} max-w-[880px]`}>
+        <section aria-labelledby="list-title" className={card}>
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 border-b border-line pb-4">
             <div>
               <h2 id="list-title" className="m-0 text-[13px] font-semibold text-muted">

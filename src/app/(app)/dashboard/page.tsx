@@ -7,15 +7,16 @@ import { ensureTodayAlerts } from "@/lib/data/notifications";
 import { TxList } from "@/components/tx-list";
 import { card } from "@/components/ui";
 import { WIDGETS, type WidgetId } from "@/lib/dashboard-widgets";
-import { getAccounts, getCashflow, getCategorySpend, getDashboardPrefs, getMonthTotals, getTransactions } from "@/lib/data/finance";
+import { getAccounts, getCashflow, getCategorySpend, getDailyExpense, getDashboardPrefs, getMonthTotals, getTransactions } from "@/lib/data/finance";
 import { requireUser } from "@/lib/dal";
-import { ACCOUNT_TYPE_LABEL, longDate, monthShort, rupiah, thisMonth, todayJakarta } from "@/lib/format";
+import { ACCOUNT_TYPE_LABEL, longDate, monthShort, rupiah, shiftMonth, thisMonth, todayJakarta } from "@/lib/format";
 import { findProvider } from "@/lib/providers";
 import { CashflowChart } from "./cashflow-chart";
 import { CategorySpend } from "./category-spend";
 import { DashboardSettings } from "./dashboard-settings";
 import { Hero } from "./hero";
 import { QuickActions } from "./quick-actions";
+import { SpendingPace } from "./spending-pace";
 
 export const metadata: Metadata = { title: "Beranda" };
 
@@ -30,7 +31,8 @@ export default function DashboardPage() {
 async function Dashboard() {
   const user = await requireUser();
   const month = thisMonth();
-  const [allAccounts, totals, recent, cashflow, catSpend, prefs, unread] = await Promise.all([
+  const prevMonth = shiftMonth(month, -1);
+  const [allAccounts, totals, recent, cashflow, catSpend, prefs, unread, nowDaily, prevDaily] = await Promise.all([
     getAccounts(),
     getMonthTotals(month),
     getTransactions({ limit: 5 }),
@@ -38,6 +40,8 @@ async function Dashboard() {
     getCategorySpend(month),
     getDashboardPrefs(),
     ensureTodayAlerts(),
+    getDailyExpense(month),
+    getDailyExpense(prevMonth),
   ]);
   const accounts = allAccounts.filter((a) => !a.archived);
   const monthName = monthShort(month);
@@ -61,6 +65,15 @@ async function Dashboard() {
     ),
     cashflow: <CashflowChart data={cashflow} />,
     categories: <CategorySpend rows={catSpend} monthName={monthName} />,
+    pace: (
+      <SpendingPace
+        nowDaily={nowDaily}
+        prevDaily={prevDaily}
+        today={Number(todayJakarta().slice(8, 10))}
+        nowName={monthShort(month)}
+        prevName={monthShort(prevMonth)}
+      />
+    ),
     recent: (
       <section aria-labelledby="recent-title" className={`${card} h-full`}>
         <div className="mb-3 flex items-center justify-between gap-3 app:mb-4">
@@ -77,7 +90,7 @@ async function Dashboard() {
           <TxList rows={recent} />
         ) : (
           <p className="m-0 text-muted">
-            Belum ada transaksi. Tekan tombol <b className="text-ink">+</b> atau <b className="text-ink">Catat</b> untuk mencatat yang pertama.
+            Belum ada transaksi. Tekan tombol <b className="text-ink">+</b> untuk mencatat yang pertama.
           </p>
         )}
       </section>

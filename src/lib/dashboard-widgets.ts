@@ -4,7 +4,8 @@ export const WIDGETS = [
   { id: "quick", label: "Aksi cepat", hint: "Tombol Pemasukan, Pengeluaran, Transfer, Akun", full: true, default: true },
   { id: "month", label: "Pemasukan & pengeluaran bulan ini", hint: "Dua angka total bulan berjalan", full: true, default: true },
   { id: "cashflow", label: "Arus kas 6 bulan", hint: "Grafik batang pemasukan dan pengeluaran per bulan", full: false, default: true },
-  { id: "categories", label: "Pengeluaran per kategori", hint: "Kategori terbesar bulan ini", full: false, default: true },
+  { id: "categories", label: "Komposisi pengeluaran", hint: "Donat 5 kategori terbesar bulan ini", full: false, default: true },
+  { id: "pace", label: "Laju pengeluaran", hint: "Garis pengeluaran bulan ini dibanding bulan lalu", full: false, default: true },
   { id: "recent", label: "Transaksi terakhir", hint: "5 transaksi terbaru", full: false, default: true },
   { id: "balances", label: "Saldo per akun", hint: "Saldo setiap akun dengan logonya", full: false, default: false },
 ] as const;
